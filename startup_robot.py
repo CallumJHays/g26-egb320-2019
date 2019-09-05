@@ -15,6 +15,7 @@ import socket
 from urllib.request import urlopen, URLError
 from npm.bindings import npm_run
 from pathlib import Path
+from ControlServer import ControlServer
 
 
 def wait_for_internet_connection():
@@ -41,7 +42,6 @@ def get_lan_ip():
 
 def format_email(fr, to, subject, body):
     from email import encoders
-    from email.mime.base import MIMEBase
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
@@ -63,51 +63,44 @@ def main():
     EMAIL_PASSWORD = "rustisthebest"
     EMAIL_SERVER = "smtp.gmail.com"
 
-    CONTROL_SERVER_CLIENT_PORT = 3000
+    CONTROL_SERVER_PORT = 3000
 
-    print("Launching control server client...")
-    current_working_dir = os.getcwd()
-    os.chdir(Path(os.path.dirname(__file__)) / 'ControlServer')
-    npm_run('start')
-    os.chdir(current_working_dir)
+    print("Launching control server...")
+    server = ControlServer(CONTROL_SERVER_PORT)
 
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
 
     print("Setting up an ngrok tunnels")
-    public_ssh_url = ngrok.connect(22, 'tcp')
-    control_server_url = ngrok.connect(CONTROL_SERVER_CLIENT_PORT, 'http')
-
-    print("ngrok public ssh url:", public_ssh_url)
+    # public_ssh_url = ngrok.connect(22, 'tcp')
+    control_server_url = ngrok.connect(CONTROL_SERVER_PORT, 'http')
+    
+    # print("ngrok public ssh url:", public_ssh_url)
     print("ngrok public control-server url:", control_server_url)
 
     lan_ip = get_lan_ip()
     print("local ip:", lan_ip)
 
     print("Sending email to", EMAIL, "with Gmail SMTP server")
-    with smtplib.SMTP_SSL(EMAIL_SERVER, SSL_PORT, context=ssl.create_default_context()) as server:
-        server.ehlo()
-        server.login(EMAIL, EMAIL_PASSWORD)
+    with smtplib.SMTP_SSL(EMAIL_SERVER, SSL_PORT, context=ssl.create_default_context()) as mail:
+        mail.ehlo()
+        mail.login(EMAIL, EMAIL_PASSWORD)
 
-        subject = "control_server: %s" % (control_server_url,)
-        email_body = """\
-            control_server: %s
-            local: %s
-            global: %s
-        """ % (control_server_url, lan_ip, public_ssh_url)
+        subject = f"control_server: {control_server_url}"
+        email_body = f"""\
+        control_server: {control_server_url}
+        local: {lan_ip}:{CONTROL_SERVER_PORT}
+        global: Needs Ngrok account upgrade (paid) to use in tandem with control_server\
+        """
 
-        server.sendmail(
+        mail.sendmail(
             EMAIL, EMAIL,
             format_email(EMAIL, EMAIL, subject, email_body)
         )
 
     print("Sent detail update to", EMAIL)
-
-    # pause until new data is sent to this process from another (will never happen)
-    # this allows the ngrok daemon (running on a different python thread) to stay online while we do other things
-    signal.pause()
-
-    # TODO: track local IP changes and update the gmail
+    
+    server.run_indefinitely()
 
 
 if __name__ == '__main__':
