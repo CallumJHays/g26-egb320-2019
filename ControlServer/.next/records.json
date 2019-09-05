@@ -1,0 +1,29 @@
+{
+  "modules": {
+    "byIdentifier": {},
+    "usedIds": {}
+  },
+  "chunks": {
+    "byName": {
+      "commons": 0,
+      "static/runtime/webpack.js": 1,
+      "static/OSOnLN1JV-7d7hnZ9Uj39/pages/_app.js": 2,
+      "static/OSOnLN1JV-7d7hnZ9Uj39/pages/_error.js": 3,
+      "static/OSOnLN1JV-7d7hnZ9Uj39/pages/index.js": 4,
+      "static/runtime/main.js": 5
+    },
+    "bySource": {
+      "0 node_modules/next/dist/build/webpack/loaders/next-babel-loader.js??ref--4!pages/index.tsx ../ts/components/Gamepad": 0,
+      "1 node_modules/next/dist/build/webpack/loaders/next-babel-loader.js??ref--4!pages/index.tsx ../ts/components/Gamepad": 6
+    },
+    "usedIds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  }
+}
