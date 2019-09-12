@@ -211,6 +211,17 @@ module.exports = require("react-joystick");
 
 /***/ }),
 
+/***/ "rodal":
+/*!************************!*\
+  !*** external "rodal" ***!
+  \************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("rodal");
+
+/***/ }),
+
 /***/ "styled-components":
 /*!************************************!*\
   !*** external "styled-components" ***!

@@ -4802,7 +4802,7 @@ var _jsxFileName = "/home/cal/uni/egb320/g26-egb320-2019/ControlServer/pages/ind
 var __jsx = react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement;
 
 var Gamepad = next_dynamic__WEBPACK_IMPORTED_MODULE_2___default()(function () {
-  return __webpack_require__.e(/*! import() */ 1).then(__webpack_require__.bind(null, /*! ../ts/components/Gamepad */ "./ts/components/Gamepad.tsx"));
+  return Promise.all(/*! import() */[__webpack_require__.e("styles"), __webpack_require__.e(1)]).then(__webpack_require__.bind(null, /*! ../ts/components/Gamepad */ "./ts/components/Gamepad.tsx"));
 }, {
   ssr: false,
   loadableGenerated: {

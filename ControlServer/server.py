@@ -11,9 +11,11 @@ app = Blueprint("ControlServer")
 
 app.static('/', str(CLIENT_STATICS_DIR))
 
+
 @app.route('/')
 async def index(req):
     return await response.file(CLIENT_STATICS_DIR / 'index.html')
+
 
 class ControlServer():
     def __init__(self, port):
@@ -24,7 +26,7 @@ class ControlServer():
         if not CLIENT_STATICS_DIR.exists():
             prev_wd = os.getcwd()
             os.chdir(SERVER_BASE_DIR)
-            subprocess.call(f"npx next export".split(" "))
+            subprocess.call("npx next export".split(" "))
             os.chdir(prev_wd)
     
     def run_indefinitely(self):

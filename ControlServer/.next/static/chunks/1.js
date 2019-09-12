@@ -22,6 +22,104 @@ module.exports = __webpack_require__(/*! core-js/library/fn/object/freeze */ "./
 
 /***/ }),
 
+/***/ "./node_modules/@babel/runtime-corejs2/helpers/esm/arrayWithHoles.js":
+/*!***************************************************************************!*\
+  !*** ./node_modules/@babel/runtime-corejs2/helpers/esm/arrayWithHoles.js ***!
+  \***************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _arrayWithHoles; });
+/* harmony import */ var _core_js_array_is_array__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../core-js/array/is-array */ "./node_modules/@babel/runtime-corejs2/core-js/array/is-array.js");
+/* harmony import */ var _core_js_array_is_array__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_core_js_array_is_array__WEBPACK_IMPORTED_MODULE_0__);
+
+function _arrayWithHoles(arr) {
+  if (_core_js_array_is_array__WEBPACK_IMPORTED_MODULE_0___default()(arr)) return arr;
+}
+
+/***/ }),
+
+/***/ "./node_modules/@babel/runtime-corejs2/helpers/esm/iterableToArrayLimit.js":
+/*!*********************************************************************************!*\
+  !*** ./node_modules/@babel/runtime-corejs2/helpers/esm/iterableToArrayLimit.js ***!
+  \*********************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _iterableToArrayLimit; });
+/* harmony import */ var _core_js_get_iterator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../core-js/get-iterator */ "./node_modules/@babel/runtime-corejs2/core-js/get-iterator.js");
+/* harmony import */ var _core_js_get_iterator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_core_js_get_iterator__WEBPACK_IMPORTED_MODULE_0__);
+
+function _iterableToArrayLimit(arr, i) {
+  var _arr = [];
+  var _n = true;
+  var _d = false;
+  var _e = undefined;
+
+  try {
+    for (var _i = _core_js_get_iterator__WEBPACK_IMPORTED_MODULE_0___default()(arr), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      _arr.push(_s.value);
+
+      if (i && _arr.length === i) break;
+    }
+  } catch (err) {
+    _d = true;
+    _e = err;
+  } finally {
+    try {
+      if (!_n && _i["return"] != null) _i["return"]();
+    } finally {
+      if (_d) throw _e;
+    }
+  }
+
+  return _arr;
+}
+
+/***/ }),
+
+/***/ "./node_modules/@babel/runtime-corejs2/helpers/esm/nonIterableRest.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/@babel/runtime-corejs2/helpers/esm/nonIterableRest.js ***!
+  \****************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _nonIterableRest; });
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance");
+}
+
+/***/ }),
+
+/***/ "./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js ***!
+  \**************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _slicedToArray; });
+/* harmony import */ var _arrayWithHoles__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./arrayWithHoles */ "./node_modules/@babel/runtime-corejs2/helpers/esm/arrayWithHoles.js");
+/* harmony import */ var _iterableToArrayLimit__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./iterableToArrayLimit */ "./node_modules/@babel/runtime-corejs2/helpers/esm/iterableToArrayLimit.js");
+/* harmony import */ var _nonIterableRest__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./nonIterableRest */ "./node_modules/@babel/runtime-corejs2/helpers/esm/nonIterableRest.js");
+
+
+
+function _slicedToArray(arr, i) {
+  return Object(_arrayWithHoles__WEBPACK_IMPORTED_MODULE_0__["default"])(arr) || Object(_iterableToArrayLimit__WEBPACK_IMPORTED_MODULE_1__["default"])(arr, i) || Object(_nonIterableRest__WEBPACK_IMPORTED_MODULE_2__["default"])();
+}
+
+/***/ }),
+
 /***/ "./node_modules/@babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral.js":
 /*!**********************************************************************************!*\
   !*** ./node_modules/@babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral.js ***!
@@ -1552,6 +1650,220 @@ if (false) {} else {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports=function(t){var e={};function i(n){if(e[n])return e[n].exports;var o=e[n]={i:n,l:!1,exports:{}};return t[n].call(o.exports,o,o.exports,i),o.l=!0,o.exports}return i.m=t,i.c=e,i.d=function(t,e,n){i.o(t,e)||Object.defineProperty(t,e,{configurable:!1,enumerable:!0,get:n})},i.r=function(t){Object.defineProperty(t,"__esModule",{value:!0})},i.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return i.d(e,"a",e),e},i.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},i.p="",i(i.s=7)}([function(t,e,i){t.exports=function(){var t,e=!!("ontouchstart"in window),i=!!window.PointerEvent,n=!!window.MSPointerEvent,o={touch:{start:"touchstart",move:"touchmove",end:"touchend, touchcancel"},mouse:{start:"mousedown",move:"mousemove",end:"mouseup"},pointer:{start:"pointerdown",move:"pointermove",end:"pointerup"},MSPointer:{start:"MSPointerDown",move:"MSPointerMove",end:"MSPointerUp"}},r={};i?t=o.pointer:n?t=o.MSPointer:e?(t=o.touch,r=o.mouse):t=o.mouse;var s={};function a(){}function d(t,e){return this.identifier=e.identifier,this.position=e.position,this.frontPosition=e.frontPosition,this.collection=t,this.defaults={size:100,threshold:.1,color:"white",fadeTime:250,dataOnly:!1,restJoystick:!0,restOpacity:.5,mode:"dynamic",zone:document.body},this.config(e),"dynamic"===this.options.mode&&(this.options.restOpacity=0),this.id=d.id,d.id+=1,this.buildEl().stylize(),this.instance={el:this.ui.el,on:this.on.bind(this),off:this.off.bind(this),show:this.show.bind(this),hide:this.hide.bind(this),add:this.addToDom.bind(this),remove:this.removeFromDom.bind(this),destroy:this.destroy.bind(this),resetDirection:this.resetDirection.bind(this),computeDirection:this.computeDirection.bind(this),trigger:this.trigger.bind(this),position:this.position,frontPosition:this.frontPosition,ui:this.ui,identifier:this.identifier,id:this.id,options:this.options},this.instance}function p(t,e){return this.nipples=[],this.idles=[],this.actives=[],this.ids=[],this.pressureIntervals={},this.manager=t,this.id=p.id,p.id+=1,this.defaults={zone:document.body,multitouch:!1,maxNumberOfNipples:10,mode:"dynamic",position:{top:0,left:0},catchDistance:200,size:100,threshold:.1,color:"white",fadeTime:250,dataOnly:!1,restJoystick:!0,restOpacity:.5},this.config(e),"static"!==this.options.mode&&"semi"!==this.options.mode||(this.options.multitouch=!1),this.options.multitouch||(this.options.maxNumberOfNipples=1),this.updateBox(),this.prepareNipples(),this.bindings(),this.begin(),this.nipples}function c(t){var e,i=this;return i.ids={},i.index=0,i.collections=[],i.config(t),i.prepareCollections(),s.bindEvt(window,"resize",function(t){clearTimeout(e),e=setTimeout(function(){var t,e=s.getScroll();i.collections.forEach(function(i){i.forEach(function(i){t=i.el.getBoundingClientRect(),i.position={x:e.x+t.left,y:e.y+t.top}})})},100)}),i.collections}s.distance=function(t,e){var i=e.x-t.x,n=e.y-t.y;return Math.sqrt(i*i+n*n)},s.angle=function(t,e){var i=e.x-t.x,n=e.y-t.y;return s.degrees(Math.atan2(n,i))},s.findCoord=function(t,e,i){var n={x:0,y:0};return i=s.radians(i),n.x=t.x-e*Math.cos(i),n.y=t.y-e*Math.sin(i),n},s.radians=function(t){return t*(Math.PI/180)},s.degrees=function(t){return t*(180/Math.PI)},s.bindEvt=function(t,e,i){for(var n,o=e.split(/[ ,]+/g),r=0;r<o.length;r+=1)n=o[r],t.addEventListener?t.addEventListener(n,i,!1):t.attachEvent&&t.attachEvent(n,i)},s.unbindEvt=function(t,e,i){for(var n,o=e.split(/[ ,]+/g),r=0;r<o.length;r+=1)n=o[r],t.removeEventListener?t.removeEventListener(n,i):t.detachEvent&&t.detachEvent(n,i)},s.trigger=function(t,e,i){var n=new CustomEvent(e,i);t.dispatchEvent(n)},s.prepareEvent=function(t){return t.preventDefault(),t.type.match(/^touch/)?t.changedTouches:t},s.getScroll=function(){var t=void 0!==window.pageXOffset?window.pageXOffset:(document.documentElement||document.body.parentNode||document.body).scrollLeft,e=void 0!==window.pageYOffset?window.pageYOffset:(document.documentElement||document.body.parentNode||document.body).scrollTop;return{x:t,y:e}},s.applyPosition=function(t,e){e.x&&e.y?(t.style.left=e.x+"px",t.style.top=e.y+"px"):(e.top||e.right||e.bottom||e.left)&&(t.style.top=e.top,t.style.right=e.right,t.style.bottom=e.bottom,t.style.left=e.left)},s.getTransitionStyle=function(t,e,i){var n=s.configStylePropertyObject(t);for(var o in n)if(n.hasOwnProperty(o))if("string"==typeof e)n[o]=e+" "+i;else{for(var r="",a=0,d=e.length;a<d;a+=1)r+=e[a]+" "+i+", ";n[o]=r.slice(0,-2)}return n},s.getVendorStyle=function(t,e){var i=s.configStylePropertyObject(t);for(var n in i)i.hasOwnProperty(n)&&(i[n]=e);return i},s.configStylePropertyObject=function(t){var e={};return e[t]="",["webkit","Moz","o"].forEach(function(i){e[i+t.charAt(0).toUpperCase()+t.slice(1)]=""}),e},s.extend=function(t,e){for(var i in e)e.hasOwnProperty(i)&&(t[i]=e[i]);return t},s.safeExtend=function(t,e){var i={};for(var n in t)t.hasOwnProperty(n)&&e.hasOwnProperty(n)?i[n]=e[n]:t.hasOwnProperty(n)&&(i[n]=t[n]);return i},s.map=function(t,e){if(t.length)for(var i=0,n=t.length;i<n;i+=1)e(t[i]);else e(t)},a.prototype.on=function(t,e){var i,n=t.split(/[ ,]+/g);this._handlers_=this._handlers_||{};for(var o=0;o<n.length;o+=1)i=n[o],this._handlers_[i]=this._handlers_[i]||[],this._handlers_[i].push(e);return this},a.prototype.off=function(t,e){return this._handlers_=this._handlers_||{},void 0===t?this._handlers_={}:void 0===e?this._handlers_[t]=null:this._handlers_[t]&&this._handlers_[t].indexOf(e)>=0&&this._handlers_[t].splice(this._handlers_[t].indexOf(e),1),this},a.prototype.trigger=function(t,e){var i,n=this,o=t.split(/[ ,]+/g);n._handlers_=n._handlers_||{};for(var r=0;r<o.length;r+=1)i=o[r],n._handlers_[i]&&n._handlers_[i].length&&n._handlers_[i].forEach(function(t){t.call(n,{type:i,target:n},e)})},a.prototype.config=function(t){this.options=this.defaults||{},t&&(this.options=s.safeExtend(this.options,t))},a.prototype.bindEvt=function(e,i){var n=this;return n._domHandlers_=n._domHandlers_||{},n._domHandlers_[i]=function(){"function"==typeof n["on"+i]?n["on"+i].apply(n,arguments):console.warn('[WARNING] : Missing "on'+i+'" handler.')},s.bindEvt(e,t[i],n._domHandlers_[i]),r[i]&&s.bindEvt(e,r[i],n._domHandlers_[i]),n},a.prototype.unbindEvt=function(e,i){return this._domHandlers_=this._domHandlers_||{},s.unbindEvt(e,t[i],this._domHandlers_[i]),r[i]&&s.unbindEvt(e,r[i],this._domHandlers_[i]),delete this._domHandlers_[i],this},d.prototype=new a,d.constructor=d,d.id=0,d.prototype.buildEl=function(t){return this.ui={},this.options.dataOnly?this:(this.ui.el=document.createElement("div"),this.ui.back=document.createElement("div"),this.ui.front=document.createElement("div"),this.ui.el.className="nipple collection_"+this.collection.id,this.ui.back.className="back",this.ui.front.className="front",this.ui.el.setAttribute("id","nipple_"+this.collection.id+"_"+this.id),this.ui.el.appendChild(this.ui.back),this.ui.el.appendChild(this.ui.front),this)},d.prototype.stylize=function(){if(this.options.dataOnly)return this;var t=this.options.fadeTime+"ms",e=s.getVendorStyle("borderRadius","50%"),i=s.getTransitionStyle("transition","opacity",t),n={};return n.el={position:"absolute",opacity:this.options.restOpacity,display:"block",zIndex:999},n.back={position:"absolute",display:"block",width:this.options.size+"px",height:this.options.size+"px",marginLeft:-this.options.size/2+"px",marginTop:-this.options.size/2+"px",background:this.options.color,opacity:".5"},n.front={width:this.options.size/2+"px",height:this.options.size/2+"px",position:"absolute",display:"block",marginLeft:-this.options.size/4+"px",marginTop:-this.options.size/4+"px",background:this.options.color,opacity:".5"},s.extend(n.el,i),s.extend(n.back,e),s.extend(n.front,e),this.applyStyles(n),this},d.prototype.applyStyles=function(t){for(var e in this.ui)if(this.ui.hasOwnProperty(e))for(var i in t[e])this.ui[e].style[i]=t[e][i];return this},d.prototype.addToDom=function(){return this.options.dataOnly||document.body.contains(this.ui.el)?this:(this.options.zone.appendChild(this.ui.el),this)},d.prototype.removeFromDom=function(){return this.options.dataOnly||!document.body.contains(this.ui.el)?this:(this.options.zone.removeChild(this.ui.el),this)},d.prototype.destroy=function(){clearTimeout(this.removeTimeout),clearTimeout(this.showTimeout),clearTimeout(this.restTimeout),this.trigger("destroyed",this.instance),this.removeFromDom(),this.off()},d.prototype.show=function(t){var e=this;return e.options.dataOnly?e:(clearTimeout(e.removeTimeout),clearTimeout(e.showTimeout),clearTimeout(e.restTimeout),e.addToDom(),e.restCallback(),setTimeout(function(){e.ui.el.style.opacity=1},0),e.showTimeout=setTimeout(function(){e.trigger("shown",e.instance),"function"==typeof t&&t.call(this)},e.options.fadeTime),e)},d.prototype.hide=function(t){var e=this;return e.options.dataOnly?e:(e.ui.el.style.opacity=e.options.restOpacity,clearTimeout(e.removeTimeout),clearTimeout(e.showTimeout),clearTimeout(e.restTimeout),e.removeTimeout=setTimeout(function(){var i="dynamic"===e.options.mode?"none":"block";e.ui.el.style.display=i,"function"==typeof t&&t.call(e),e.trigger("hidden",e.instance)},e.options.fadeTime),e.options.restJoystick&&e.restPosition(),e)},d.prototype.restPosition=function(t){var e=this;e.frontPosition={x:0,y:0};var i=e.options.fadeTime+"ms",n={};n.front=s.getTransitionStyle("transition",["top","left"],i);var o={front:{}};o.front={left:e.frontPosition.x+"px",top:e.frontPosition.y+"px"},e.applyStyles(n),e.applyStyles(o),e.restTimeout=setTimeout(function(){"function"==typeof t&&t.call(e),e.restCallback()},e.options.fadeTime)},d.prototype.restCallback=function(){var t={};t.front=s.getTransitionStyle("transition","none",""),this.applyStyles(t),this.trigger("rested",this.instance)},d.prototype.resetDirection=function(){this.direction={x:!1,y:!1,angle:!1}},d.prototype.computeDirection=function(t){var e,i,n,o=t.angle.radian,r=Math.PI/4,s=Math.PI/2;if(e=o>r&&o<3*r?"up":o>-r&&o<=r?"left":o>3*-r&&o<=-r?"down":"right",i=o>-s&&o<s?"left":"right",n=o>0?"up":"down",t.force>this.options.threshold){var a={};for(var d in this.direction)this.direction.hasOwnProperty(d)&&(a[d]=this.direction[d]);var p={};for(var d in this.direction={x:i,y:n,angle:e},t.direction=this.direction,a)a[d]===this.direction[d]&&(p[d]=!0);if(p.x&&p.y&&p.angle)return t;p.x&&p.y||this.trigger("plain",t),p.x||this.trigger("plain:"+i,t),p.y||this.trigger("plain:"+n,t),p.angle||this.trigger("dir dir:"+e,t)}return t},p.prototype=new a,p.constructor=p,p.id=0,p.prototype.prepareNipples=function(){var t=this.nipples;t.on=this.on.bind(this),t.off=this.off.bind(this),t.options=this.options,t.destroy=this.destroy.bind(this),t.ids=this.ids,t.id=this.id,t.processOnMove=this.processOnMove.bind(this),t.processOnEnd=this.processOnEnd.bind(this),t.get=function(e){if(void 0===e)return t[0];for(var i=0,n=t.length;i<n;i+=1)if(t[i].identifier===e)return t[i];return!1}},p.prototype.bindings=function(){this.bindEvt(this.options.zone,"start"),this.options.zone.style.touchAction="none",this.options.zone.style.msTouchAction="none"},p.prototype.begin=function(){var t=this.options;if("static"===t.mode){var e=this.createNipple(t.position,this.manager.getIdentifier());e.add(),this.idles.push(e)}},p.prototype.createNipple=function(t,e){var i=s.getScroll(),n={},o=this.options;if(t.x&&t.y)n={x:t.x-(i.x+this.box.left),y:t.y-(i.y+this.box.top)};else if(t.top||t.right||t.bottom||t.left){var r=document.createElement("DIV");r.style.display="hidden",r.style.top=t.top,r.style.right=t.right,r.style.bottom=t.bottom,r.style.left=t.left,r.style.position="absolute",o.zone.appendChild(r);var a=r.getBoundingClientRect();o.zone.removeChild(r),n=t,t={x:a.left+i.x,y:a.top+i.y}}var p=new d(this,{color:o.color,size:o.size,threshold:o.threshold,fadeTime:o.fadeTime,dataOnly:o.dataOnly,restJoystick:o.restJoystick,restOpacity:o.restOpacity,mode:o.mode,identifier:e,position:t,zone:o.zone,frontPosition:{x:0,y:0}});return o.dataOnly||(s.applyPosition(p.ui.el,n),s.applyPosition(p.ui.front,p.frontPosition)),this.nipples.push(p),this.trigger("added "+p.identifier+":added",p),this.manager.trigger("added "+p.identifier+":added",p),this.bindNipple(p),p},p.prototype.updateBox=function(){this.box=this.options.zone.getBoundingClientRect()},p.prototype.bindNipple=function(t){var e,i=this,n=function(t,n){e=t.type+" "+n.id+":"+t.type,i.trigger(e,n)};t.on("destroyed",i.onDestroyed.bind(i)),t.on("shown hidden rested dir plain",n),t.on("dir:up dir:right dir:down dir:left",n),t.on("plain:up plain:right plain:down plain:left",n)},p.prototype.pressureFn=function(t,e,i){var n=this,o=0;clearInterval(n.pressureIntervals[i]),n.pressureIntervals[i]=setInterval(function(){var i=t.force||t.pressure||t.webkitForce||0;i!==o&&(e.trigger("pressure",i),n.trigger("pressure "+e.identifier+":pressure",i),o=i)}.bind(n),100)},p.prototype.onstart=function(t){var e=this,i=e.options;return t=s.prepareEvent(t),e.updateBox(),s.map(t,function(t){e.actives.length<i.maxNumberOfNipples&&e.processOnStart(t)}),e.manager.bindDocument(),!1},p.prototype.processOnStart=function(t){var e,i=this,n=i.options,o=i.manager.getIdentifier(t),r=t.force||t.pressure||t.webkitForce||0,a={x:t.pageX,y:t.pageY},d=i.getOrCreate(o,a);d.identifier!==o&&i.manager.removeIdentifier(d.identifier),d.identifier=o;var p=function(e){e.trigger("start",e),i.trigger("start "+e.id+":start",e),e.show(),r>0&&i.pressureFn(t,e,e.identifier),i.processOnMove(t)};if((e=i.idles.indexOf(d))>=0&&i.idles.splice(e,1),i.actives.push(d),i.ids.push(d.identifier),"semi"!==n.mode)p(d);else{var c=s.distance(a,d.position);if(!(c<=n.catchDistance))return d.destroy(),void i.processOnStart(t);p(d)}return d},p.prototype.getOrCreate=function(t,e){var i,n=this.options;return/(semi|static)/.test(n.mode)?(i=this.idles[0])?(this.idles.splice(0,1),i):"semi"===n.mode?this.createNipple(e,t):(console.warn("Coudln't find the needed nipple."),!1):i=this.createNipple(e,t)},p.prototype.processOnMove=function(t){var e=this.options,i=this.manager.getIdentifier(t),n=this.nipples.get(i);if(!n)return console.error("Found zombie joystick with ID "+i),void this.manager.removeIdentifier(i);n.identifier=i;var o=n.options.size/2,r={x:t.pageX,y:t.pageY},a=s.distance(r,n.position),d=s.angle(r,n.position),p=s.radians(d),c=a/o;a>o&&(a=o,r=s.findCoord(n.position,a,d)),n.frontPosition={x:r.x-n.position.x,y:r.y-n.position.y},e.dataOnly||s.applyPosition(n.ui.front,n.frontPosition);var l={identifier:n.identifier,position:r,force:c,pressure:t.force||t.pressure||t.webkitForce||0,distance:a,angle:{radian:p,degree:d},instance:n};(l=n.computeDirection(l)).angle={radian:s.radians(180-d),degree:180-d},n.trigger("move",l),this.trigger("move "+n.id+":move",l)},p.prototype.processOnEnd=function(t){var e=this,i=e.options,n=e.manager.getIdentifier(t),o=e.nipples.get(n),r=e.manager.removeIdentifier(o.identifier);o&&(i.dataOnly||o.hide(function(){"dynamic"===i.mode&&(o.trigger("removed",o),e.trigger("removed "+o.id+":removed",o),e.manager.trigger("removed "+o.id+":removed",o),o.destroy())}),clearInterval(e.pressureIntervals[o.identifier]),o.resetDirection(),o.trigger("end",o),e.trigger("end "+o.id+":end",o),e.ids.indexOf(o.identifier)>=0&&e.ids.splice(e.ids.indexOf(o.identifier),1),e.actives.indexOf(o)>=0&&e.actives.splice(e.actives.indexOf(o),1),/(semi|static)/.test(i.mode)?e.idles.push(o):e.nipples.indexOf(o)>=0&&e.nipples.splice(e.nipples.indexOf(o),1),e.manager.unbindDocument(),/(semi|static)/.test(i.mode)&&(e.manager.ids[r.id]=r.identifier))},p.prototype.onDestroyed=function(t,e){this.nipples.indexOf(e)>=0&&this.nipples.splice(this.nipples.indexOf(e),1),this.actives.indexOf(e)>=0&&this.actives.splice(this.actives.indexOf(e),1),this.idles.indexOf(e)>=0&&this.idles.splice(this.idles.indexOf(e),1),this.ids.indexOf(e.identifier)>=0&&this.ids.splice(this.ids.indexOf(e.identifier),1),this.manager.removeIdentifier(e.identifier),this.manager.unbindDocument()},p.prototype.destroy=function(){for(var t in this.unbindEvt(this.options.zone,"start"),this.nipples.forEach(function(t){t.destroy()}),this.pressureIntervals)this.pressureIntervals.hasOwnProperty(t)&&clearInterval(this.pressureIntervals[t]);this.trigger("destroyed",this.nipples),this.manager.unbindDocument(),this.off()},c.prototype=new a,c.constructor=c,c.prototype.prepareCollections=function(){var t=this;t.collections.create=t.create.bind(t),t.collections.on=t.on.bind(t),t.collections.off=t.off.bind(t),t.collections.destroy=t.destroy.bind(t),t.collections.get=function(e){var i;return t.collections.every(function(t){return!(i=t.get(e))}),i}},c.prototype.create=function(t){return this.createCollection(t)},c.prototype.createCollection=function(t){var e=new p(this,t);return this.bindCollection(e),this.collections.push(e),e},c.prototype.bindCollection=function(t){var e,i=this,n=function(t,n){e=t.type+" "+n.id+":"+t.type,i.trigger(e,n)};t.on("destroyed",i.onDestroyed.bind(i)),t.on("shown hidden rested dir plain",n),t.on("dir:up dir:right dir:down dir:left",n),t.on("plain:up plain:right plain:down plain:left",n)},c.prototype.bindDocument=function(){this.binded||(this.bindEvt(document,"move").bindEvt(document,"end"),this.binded=!0)},c.prototype.unbindDocument=function(t){Object.keys(this.ids).length&&!0!==t||(this.unbindEvt(document,"move").unbindEvt(document,"end"),this.binded=!1)},c.prototype.getIdentifier=function(t){var e;return t?void 0===(e=void 0===t.identifier?t.pointerId:t.identifier)&&(e=this.latest||0):e=this.index,void 0===this.ids[e]&&(this.ids[e]=this.index,this.index+=1),this.latest=e,this.ids[e]},c.prototype.removeIdentifier=function(t){var e={};for(var i in this.ids)if(this.ids[i]===t){e.id=i,e.identifier=this.ids[i],delete this.ids[i];break}return e},c.prototype.onmove=function(t){return this.onAny("move",t),!1},c.prototype.onend=function(t){return this.onAny("end",t),!1},c.prototype.onAny=function(t,e){var i,n=this,o="processOn"+t.charAt(0).toUpperCase()+t.slice(1);return e=s.prepareEvent(e),s.map(e,function(t){i=n.getIdentifier(t),s.map(n.collections,function(t,e,i){i.ids.indexOf(e)>=0&&(i[o](t),t._found_=!0)}.bind(null,t,i)),t._found_||n.removeIdentifier(i)}),!1},c.prototype.destroy=function(){this.unbindDocument(!0),this.ids={},this.index=0,this.collections.forEach(function(t){t.destroy()}),this.off()},c.prototype.onDestroyed=function(t,e){if(this.collections.indexOf(e)<0)return!1;this.collections.splice(this.collections.indexOf(e),1)};var l=new c;return{create:function(t){return l.create(t)},factory:l}}()},function(t,e,i){"use strict";t.exports="SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED"},function(t,e,i){"use strict";var n=function(t){};t.exports=function(t,e,i,o,r,s,a,d){if(n(e),!t){var p;if(void 0===e)p=new Error("Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings.");else{var c=[i,o,r,s,a,d],l=0;(p=new Error(e.replace(/%s/g,function(){return c[l++]}))).name="Invariant Violation"}throw p.framesToPop=1,p}}},function(t,e,i){"use strict";function n(t){return function(){return t}}var o=function(){};o.thatReturns=n,o.thatReturnsFalse=n(!1),o.thatReturnsTrue=n(!0),o.thatReturnsNull=n(null),o.thatReturnsThis=function(){return this},o.thatReturnsArgument=function(t){return t},t.exports=o},function(t,e,i){"use strict";var n=i(3),o=i(2),r=i(1);t.exports=function(){function t(t,e,i,n,s,a){a!==r&&o(!1,"Calling PropTypes validators directly is not supported by the `prop-types` package. Use PropTypes.checkPropTypes() to call them. Read more at http://fb.me/use-check-prop-types")}function e(){return t}t.isRequired=t;var i={array:t,bool:t,func:t,number:t,object:t,string:t,symbol:t,any:t,arrayOf:e,element:t,instanceOf:e,node:t,objectOf:e,oneOf:e,oneOfType:e,shape:e,exact:e};return i.checkPropTypes=n,i.PropTypes=i,i}},function(t,e,i){t.exports=i(4)()},function(t,e){t.exports=__webpack_require__(/*! react */ "./node_modules/react/index.js")},function(t,e,i){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=Object.assign||function(t){for(var e=1;e<arguments.length;e++){var i=arguments[e];for(var n in i)Object.prototype.hasOwnProperty.call(i,n)&&(t[n]=i[n])}return t},o=function(){function t(t,e){for(var i=0;i<e.length;i++){var n=e[i];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}return function(e,i,n){return i&&t(e.prototype,i),n&&t(e,n),e}}(),r=i(6),s=p(r),a=p(i(5)),d=p(i(0));function p(t){return t&&t.__esModule?t:{default:t}}var c=function(t){function e(t){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e);var i=function(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,t));return i.joyRef=s.default.createRef(),i}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,r.Component),o(e,[{key:"componentDidMount",value:function(){this.manager=d.default.create(n({},this.props.options,{zone:this.joyRef.current})),this.props.managerListener(this.manager)}},{key:"render",value:function(){return s.default.createElement("div",{ref:this.joyRef,style:this.props.containerStyle})}}]),e}();c.defaultProps={options:{mode:"semi",catchDistance:150,color:"white"},containerStyle:{width:"100%",height:"50vh",position:"relative",background:"linear-gradient(to right, #E684AE, #79CBCA, #77A1D3)"}},c.propTypes={managerListener:a.default.func.isRequired,options:a.default.shape({mode:a.default.string,catchDistance:a.default.number,color:a.default.string}),containerStyle:a.default.shape({width:a.default.string,height:a.default.string,position:a.default.string,background:a.default.string})},e.default=c}]);
+
+/***/ }),
+
+/***/ "./node_modules/rodal/lib/rodal.js":
+/*!*****************************************!*\
+  !*** ./node_modules/rodal/lib/rodal.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /* ===============================
+                                                                                                                                                                                                                                                                   * Rodal v1.6.1 https://chenjiahan.github.com/rodal
+                                                                                                                                                                                                                                                                   * =============================== */
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+// env
+var inBrowser = typeof window !== 'undefined';
+var UA = inBrowser && window.navigator.userAgent.toLowerCase();
+var isIE9 = UA && UA.indexOf('msie 9.0') > 0;
+
+var Dialog = function Dialog(props) {
+    var animation = (props.animationType === 'enter' ? props.enterAnimation : props.leaveAnimation) || props.animation;
+    var className = 'rodal-dialog rodal-' + animation + '-' + props.animationType;
+    var CloseButton = props.showCloseButton ? _react2.default.createElement('span', { className: 'rodal-close', onClick: props.onClose }) : null;
+    var width = props.width,
+        height = props.height,
+        measure = props.measure,
+        duration = props.duration,
+        customStyles = props.customStyles;
+
+    var style = {
+        width: width + measure,
+        height: height + measure,
+        animationDuration: duration + 'ms',
+        WebkitAnimationDuration: duration + 'ms'
+    };
+    var mergedStyles = _extends({}, style, customStyles);
+
+    return _react2.default.createElement(
+        'div',
+        { style: mergedStyles, className: className },
+        props.children,
+        CloseButton
+    );
+};
+
+var Rodal = function (_React$Component) {
+    _inherits(Rodal, _React$Component);
+
+    function Rodal() {
+        var _ref;
+
+        var _temp, _this, _ret;
+
+        _classCallCheck(this, Rodal);
+
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Rodal.__proto__ || Object.getPrototypeOf(Rodal)).call.apply(_ref, [this].concat(args))), _this), _this.state = {
+            isShow: false,
+            animationType: 'leave'
+        }, _this.onKeyUp = function (event) {
+            if (_this.props.closeOnEsc && event.keyCode === 27) {
+                _this.props.onClose();
+            }
+        }, _this.animationEnd = function (event) {
+            if (_this.state.animationType === 'leave') {
+                _this.setState({ isShow: false });
+            } else if (_this.props.closeOnEsc) {
+                _this.el.focus();
+            }
+
+            if (event.target === _this.el) {
+                var onAnimationEnd = _this.props.onAnimationEnd;
+
+                onAnimationEnd && onAnimationEnd();
+            }
+        }, _temp), _possibleConstructorReturn(_this, _ret);
+    }
+
+    _createClass(Rodal, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            if (this.props.visible) {
+                this.enter();
+            }
+        }
+    }, {
+        key: 'componentWillReceiveProps',
+        value: function componentWillReceiveProps(nextProps) {
+            if (!this.props.visible && nextProps.visible) {
+                this.enter();
+            } else if (this.props.visible && !nextProps.visible) {
+                this.leave();
+            }
+        }
+    }, {
+        key: 'enter',
+        value: function enter() {
+            this.setState({
+                isShow: true,
+                animationType: 'enter'
+            });
+        }
+    }, {
+        key: 'leave',
+        value: function leave() {
+            this.setState(isIE9 ? { isShow: false } : { animationType: 'leave' });
+        }
+    }, {
+        key: 'render',
+        value: function render() {
+            var _this2 = this;
+
+            var props = this.props,
+                state = this.state;
+
+            var onClick = props.closeMaskOnClick ? props.onClose : null;
+            var mask = props.showMask ? _react2.default.createElement('div', { className: 'rodal-mask', style: props.customMaskStyles, onClick: onClick }) : null;
+            var style = {
+                display: state.isShow ? '' : 'none',
+                animationDuration: props.duration + 'ms',
+                WebkitAnimationDuration: props.duration + 'ms'
+            };
+
+            return _react2.default.createElement(
+                'div',
+                {
+                    style: style,
+                    className: "rodal rodal-fade-" + state.animationType + ' ' + props.className,
+                    onAnimationEnd: this.animationEnd,
+                    tabIndex: '-1',
+                    ref: function ref(el) {
+                        _this2.el = el;
+                    },
+                    onKeyUp: this.onKeyUp
+                },
+                mask,
+                _react2.default.createElement(
+                    Dialog,
+                    _extends({}, props, { animationType: state.animationType }),
+                    props.children
+                )
+            );
+        }
+    }]);
+
+    return Rodal;
+}(_react2.default.Component);
+
+Rodal.propTypes = {
+    width: _propTypes2.default.number,
+    height: _propTypes2.default.number,
+    measure: _propTypes2.default.string,
+    visible: _propTypes2.default.bool,
+    showMask: _propTypes2.default.bool,
+    closeOnEsc: _propTypes2.default.bool,
+    closeMaskOnClick: _propTypes2.default.bool,
+    showCloseButton: _propTypes2.default.bool,
+    animation: _propTypes2.default.string,
+    enterAnimation: _propTypes2.default.string,
+    leaveAnimation: _propTypes2.default.string,
+    duration: _propTypes2.default.number,
+    className: _propTypes2.default.string,
+    customStyles: _propTypes2.default.object,
+    customMaskStyles: _propTypes2.default.object,
+    onClose: _propTypes2.default.func.isRequired,
+    onAnimationEnd: _propTypes2.default.func
+};
+Rodal.defaultProps = {
+    width: 400,
+    height: 240,
+    measure: 'px',
+    visible: false,
+    showMask: true,
+    closeOnEsc: false,
+    closeMaskOnClick: true,
+    showCloseButton: true,
+    animation: 'zoom',
+    enterAnimation: '',
+    leaveAnimation: '',
+    duration: 300,
+    className: '',
+    customStyles: {},
+    customMaskStyles: {}
+};
+exports.default = Rodal;
+
 
 /***/ }),
 
@@ -4155,19 +4467,72 @@ if ( true && typeof window !== 'undefined' && typeof navigator !== 'undefined' &
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral */ "./node_modules/@babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var react_joystick__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-joystick */ "./node_modules/react-joystick/lib/index.js");
-/* harmony import */ var react_joystick__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_joystick__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var _babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/slicedToArray */ "./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js");
+/* harmony import */ var _babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral */ "./node_modules/@babel/runtime-corejs2/helpers/esm/taggedTemplateLiteral.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var react_joystick__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-joystick */ "./node_modules/react-joystick/lib/index.js");
+/* harmony import */ var react_joystick__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_joystick__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var _Menu__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Menu */ "./ts/components/Menu.tsx");
+
 
 var _jsxFileName = "/home/cal/uni/egb320/g26-egb320-2019/ControlServer/ts/components/Gamepad.tsx";
 
-var __jsx = react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement;
+var __jsx = react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement;
+
+function _templateObject9() {
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  background-image: linear-gradient(to bottom left, #4CAF50, #1B5E20);\n  font-size: 7vh;\n\n  :hover {\n    background-image: linear-gradient(to bottom left, #1B5E20, #4CAF50);\n  }\n  :active {\n    border-color: #388E3C;\n  }\n"]);
+
+  _templateObject9 = function _templateObject9() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject8() {
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  background-image: linear-gradient(to bottom left, #1e88e5, #0d47a1);\n  font-size: 3vh;\n\n  :hover {\n    background-image: linear-gradient(to bottom left, #0d47a1, #1e88e5);\n  }\n  :active {\n    border-color: #0d47a1;\n  }\n\n  ", "\n"]);
+
+  _templateObject8 = function _templateObject8() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject7() {
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  display: flex;\n  flex-direction: column;\n  font-size: 0.75em;\n"]);
+
+  _templateObject7 = function _templateObject7() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject6() {
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  flex-grow: 1;\n  background-image: linear-gradient(to bottom left, #f44336, #b71c1c);\n  font-size: 10vh;\n\n  :hover {\n    background-image: linear-gradient(to bottom left, #b71c1c, #f44336);\n  }\n  :active {\n    border-color: #b71c1c;\n  }\n"]);
+
+  _templateObject6 = function _templateObject6() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject5() {
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  display: flex;\n  align-items: stretch;\n  height: 50vh;\n  button {\n    cursor: pointer;\n    flex-grow: 1;\n    color: white;\n    \n\n    border: ", ";\n  }\n"]);
+
+  _templateObject5 = function _templateObject5() {
+    return data;
+  };
+
+  return data;
+}
 
 function _templateObject4() {
-  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  background-image: linear-gradient(to bottom left, #1e88e5, #0d47a1);\n  :hover {\n    background-image: linear-gradient(to bottom left, #0d47a1, #1e88e5);\n  }\n  :active {\n    border-color: #0d47a1;\n  }\n"]);
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  display: flex;\n  position: relative;\n  align-items: center;\n  justify-content: center;\n\n  > span {\n    color: #757575;\n    position: absolute;\n    z-index: 1;\n\n    font-size: 2rem;\n    white-space: pre-line;\n    text-align: center;\n\n    user-select: none;\n    pointer-events: none;\n  }\n"]);
 
   _templateObject4 = function _templateObject4() {
     return data;
@@ -4177,7 +4542,7 @@ function _templateObject4() {
 }
 
 function _templateObject3() {
-  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  background-image: linear-gradient(to bottom left, #f44336, #b71c1c);\n  :hover {\n    background-image: linear-gradient(to bottom left, #b71c1c, #f44336);\n  }\n  :active {\n    border-color: #b71c1c;\n  }\n"]);
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  display: flex;\n  flex-direction: column;\n"]);
 
   _templateObject3 = function _templateObject3() {
     return data;
@@ -4187,7 +4552,7 @@ function _templateObject3() {
 }
 
 function _templateObject2() {
-  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  display: flex;\n  flex-direction: column;\n\n  button {\n    flex-grow: 1;\n    font-family: Impact, Charcoal, sans-serif;\n    color: white;\n    font-size: 2.5em;\n    border: 5px solid white;\n  }\n"]);
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  display: flex;\n  align-items: stretch;\n  height: 100vh;\n  > * {\n    flex-grow: 1;\n  }\n"]);
 
   _templateObject2 = function _templateObject2() {
     return data;
@@ -4197,7 +4562,7 @@ function _templateObject2() {
 }
 
 function _templateObject() {
-  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  display: flex;\n  align-items: stretch;\n  height: 100vh;\n  > * {\n    flex-grow: 1;\n  }\n"]);
+  var data = Object(_babel_runtime_corejs2_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_1__["default"])(["\n  font-family: Impact, Charcoal, sans-serif;\n"]);
 
   _templateObject = function _templateObject() {
     return data;
@@ -4208,28 +4573,54 @@ function _templateObject() {
 
 
 
-var Container = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].div(_templateObject());
-var ButtonsContainer = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].div(_templateObject2());
-var KickButton = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].button(_templateObject3());
-var DribbleButton = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].button(_templateObject4());
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  return __jsx(Container, {
+
+
+var App = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject());
+var Container = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject2());
+var RightSide = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject3());
+var JoystickContainer = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject4());
+var ButtonContainer = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject5(), function (pressed) {
+  return pressed ? '5px solid #EEEEEE' : '3px solid #424242';
+});
+var KickButton = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].button(_templateObject6());
+var ConfigButtons = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div(_templateObject7());
+var ToggleDribbleButton = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].button(_templateObject8(), function (_ref) {
+  var on = _ref.on;
+  return on ? '' : 'filter: grayscale(100%)';
+});
+var MenuButton = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].button(_templateObject9());
+
+var Joystick = function Joystick(_ref2) {
+  var _ref2$height = _ref2.height,
+      height = _ref2$height === void 0 ? 'auto' : _ref2$height,
+      bgText = _ref2.bgText;
+  return __jsx(JoystickContainer, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 47
+      lineNumber: 105
     },
     __self: this
-  }, __jsx(react_joystick__WEBPACK_IMPORTED_MODULE_2___default.a, {
+  }, __jsx("span", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 106
+    },
+    __self: this
+  }, bgText), __jsx(react_joystick__WEBPACK_IMPORTED_MODULE_3___default.a, {
     joyOptions: {
       mode: "semi",
       catchDistance: 100,
       color: "white"
     },
     containerStyle: {
+      display: "flex",
       position: "relative",
-      width: "50%",
       margin: 0,
-      background: "radial-gradient(#212121, #212121, #424242)"
+      background: "radial-gradient(#212121, #212121, #424242)",
+      height: height,
+      width: '50vw',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     managerListener: function managerListener(nipple) {
       nipple.on("move", function (_e, _stick) {
@@ -4241,41 +4632,213 @@ var DribbleButton = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].bu
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 48
+      lineNumber: 107
     },
     __self: this
-  }), __jsx(ButtonsContainer, {
+  }));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (function (_ref3) {
+  var _ref3$_dribbleState = _ref3._dribbleState;
+  _ref3$_dribbleState = _ref3$_dribbleState === void 0 ? Object(react__WEBPACK_IMPORTED_MODULE_2__["useState"])(false) : _ref3$_dribbleState;
+
+  var _ref3$_dribbleState2 = Object(_babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref3$_dribbleState, 2),
+      isDribbling = _ref3$_dribbleState2[0],
+      setDribbling = _ref3$_dribbleState2[1],
+      _ref3$_menuState = _ref3._menuState;
+
+  _ref3$_menuState = _ref3$_menuState === void 0 ? Object(react__WEBPACK_IMPORTED_MODULE_2__["useState"])(false) : _ref3$_menuState;
+
+  var _ref3$_menuState2 = Object(_babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref3$_menuState, 2),
+      isMenuOpen = _ref3$_menuState2[0],
+      setMenuOpen = _ref3$_menuState2[1];
+
+  return __jsx(App, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 65
+      lineNumber: 134
     },
     __self: this
-  }, __jsx(KickButton, {
+  }, isMenuOpen ? __jsx(_Menu__WEBPACK_IMPORTED_MODULE_5__["default"], {
+    onClose: function onClose() {
+      return setMenuOpen(false);
+    },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 66
+      lineNumber: 135
+    },
+    __self: this
+  }) : null, __jsx(Container, {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 136
+    },
+    __self: this
+  }, __jsx(Joystick, {
+    height: "100vh",
+    bgText: "\u2191\n      \u2190 STRAFE \u2192\n      \u2193",
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 138
+    },
+    __self: this
+  }), __jsx(RightSide, {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 142
+    },
+    __self: this
+  }, __jsx(Joystick, {
+    height: "50vh",
+    bgText: "\u21B6 ROTATE \u21B7",
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 143
+    },
+    __self: this
+  }), __jsx(ButtonContainer, {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 145
+    },
+    __self: this
+  }, __jsx(ConfigButtons, {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 146
+    },
+    __self: this
+  }, __jsx(ToggleDribbleButton, {
+    onClick: function onClick() {
+      return setDribbling(!isDribbling);
+    },
+    className: isDribbling ? 'on' : null,
+    on: isDribbling,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 147
+    },
+    __self: this
+  }, "TOGGLE", __jsx("br", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 152
+    },
+    __self: this
+  }), "DRIBBLE:", __jsx("br", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 152
+    },
+    __self: this
+  }), isDribbling ? "ON" : "OFF"), __jsx(MenuButton, {
+    onClick: function onClick() {
+      return setMenuOpen(true);
+    },
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 154
+    },
+    __self: this
+  }, "MENU")), __jsx(KickButton, {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 158
     },
     __self: this
   }, __jsx("b", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 67
+      lineNumber: 159
     },
     __self: this
-  }, "KICK")), __jsx(DribbleButton, {
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 69
-    },
-    __self: this
-  }, __jsx("b", {
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 70
-    },
-    __self: this
-  }, "DRIBBLE"))));
+  }, "KICK"))))));
 });
+
+/***/ }),
+
+/***/ "./ts/components/Menu.tsx":
+/*!********************************!*\
+  !*** ./ts/components/Menu.tsx ***!
+  \********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/slicedToArray */ "./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var rodal__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rodal */ "./node_modules/rodal/lib/rodal.js");
+/* harmony import */ var rodal__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(rodal__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var rodal_lib_rodal_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! rodal/lib/rodal.css */ "./node_modules/rodal/lib/rodal.css");
+/* harmony import */ var rodal_lib_rodal_css__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(rodal_lib_rodal_css__WEBPACK_IMPORTED_MODULE_3__);
+
+var _jsxFileName = "/home/cal/uni/egb320/g26-egb320-2019/ControlServer/ts/components/Menu.tsx";
+
+var __jsx = react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement;
+
+
+
+
+var Menu = function Menu(_ref) {
+  var onClose = _ref.onClose,
+      _ref$aiParams = _ref.aiParams;
+  _ref$aiParams = _ref$aiParams === void 0 ? {} : _ref$aiParams;
+  var _ref$aiParams$_aimYel = _ref$aiParams._aimYellowGoal;
+  _ref$aiParams$_aimYel = _ref$aiParams$_aimYel === void 0 ? Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])(true) : _ref$aiParams$_aimYel;
+
+  var _ref$aiParams$_aimYel2 = Object(_babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref$aiParams$_aimYel, 2),
+      aimYellowGoal = _ref$aiParams$_aimYel2[0],
+      setAimYellowGoal = _ref$aiParams$_aimYel2[1];
+
+  return __jsx(rodal__WEBPACK_IMPORTED_MODULE_2___default.a, {
+    visible: true,
+    onClose: onClose,
+    width: 550,
+    height: 300,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 12
+    },
+    __self: this
+  }, __jsx("h4", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 13
+    },
+    __self: this
+  }, "Menu"), __jsx("button", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 14
+    },
+    __self: this
+  }, "Play Imperial March"), __jsx("hr", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 16
+    },
+    __self: this
+  }), __jsx("h4", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 17
+    },
+    __self: this
+  }, "AI"), "Current goal: ", aimYellowGoal ? 'Yellow' : 'Blue', " ", __jsx("button", {
+    onClick: function onClick() {
+      return setAimYellowGoal(!aimYellowGoal);
+    },
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 21
+    },
+    __self: this
+  }, "Switch"));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (Menu);
 
 /***/ })
 
