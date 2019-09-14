@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export": "next build . && next export && cp ./static/* ./out/"
   },
   "author": "CallumJHays@gmail.com",
   "license": "ISC",

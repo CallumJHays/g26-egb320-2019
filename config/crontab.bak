@@ -20,4 +20,4 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-@reboot /home/pi/berryconda3/bin/python /home/pi/SoccerRobot/startup_robot.py >> /home/pi/SoccerRobot/data/ssh_manager_log.txt 2>&1
+@reboot PATH="/home/pi/berryconda3/bin:$PATH" python /home/pi/SoccerRobot/startup_robot.py >> /home/pi/SoccerRobot/data/ssh_manager_log.txt 2>&1

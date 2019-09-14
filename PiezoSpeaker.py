@@ -1,8 +1,7 @@
 import librosa
 import asyncio
-
+import math
 import GPIO
-
 
 def _track_playing(play_func):
     async def inner(self, *args, skip_playing_check=False):
@@ -12,21 +11,27 @@ def _track_playing(play_func):
         self.playing = False
     return inner
 
-class PiezoSpeaker:
 
-    # A4 - G5
-    NOTE_SCALE = 'ABCDEF'
-    SCALE = [440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99]
+class PiezoSpeaker(GPIO.GPIODevice):
 
+    # A1 - G2
+    NOTE_SCALE = 'ABCDEFG'
+    OCTAVE = 3
+    SCALE = [55.00, 61.74, 65.41, 73.42, 82.41, 87.31, 98.00]
+    REST = None # just use the symbol
+
+    @GPIO.dynamic_config
     def __init__(self, pin, volume=50):
+        super().__init__()
         assert 0 <= volume and volume <= 100
         GPIO.setup(pin, GPIO.OUT)
         self.pwm = GPIO.PWM(pin)
         self.playing = False
-        self.pwm.ChangeDutyCycle(volume)
+        self.set_volume(volume)
 
     
     def set_volume(self, volume):
+        self.volume = volume
         self.pwm.ChangeDutyCycle(volume)
 
 
@@ -45,16 +50,30 @@ class PiezoSpeaker:
 
     @_track_playing
     async def play_notes(self, notes, sec_per_note=0.5):
-        frequencies = [self.SCALE[self.NOTE_SCALE.index(note)] for note in notes]
+        frequencies = [
+            int(
+                self.SCALE[
+                    self.NOTE_SCALE.index(note)
+                ] * math.pow(2, self.OCTAVE - 1)
+            )
+            if note != ' '
+            else self.REST
+            for note in notes
+        ]
         await self.play_frequencies(frequencies, sec_per_note, skip_playing_check=True)
 
 
     @_track_playing
     async def play_frequencies(self, frequencies, sec_per_freq=0.5):
-        self.pwm.start(50)
+        self.pwm.start(self.volume)
 
         for freq in frequencies:
-            self.pwm.ChangeFrequency(freq)
-            await asyncio.sleep(sec_per_freq)
+            if freq == self.REST:
+                self.pwm.stop()
+                await asyncio.sleep(sec_per_freq)
+                self.pwm.start(self.volume)
+            else:
+                self.pwm.ChangeFrequency(freq)
+                await asyncio.sleep(sec_per_freq)
 
         self.pwm.stop()

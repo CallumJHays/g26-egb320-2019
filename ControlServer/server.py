@@ -6,6 +6,7 @@ import os
 
 SERVER_BASE_DIR = Path(__file__).parents[0]
 CLIENT_STATICS_DIR = SERVER_BASE_DIR / 'out'
+SERVER_STATICS_DIR = SERVER_BASE_DIR / 'static'
 
 app = Blueprint("ControlServer")
 
@@ -18,15 +19,16 @@ async def index(req):
 
 
 class ControlServer():
-    def __init__(self, port):
+    def __init__(self, port, autobuild=True):
         self.server = Sanic()
         self.server.blueprint(app)
         self.port = port
 
-        if not CLIENT_STATICS_DIR.exists():
+        # eject the nextjs frontend to static files for serving
+        if autobuild:
             prev_wd = os.getcwd()
             os.chdir(SERVER_BASE_DIR)
-            subprocess.call("npx next export".split(" "))
+            subprocess.call("npm run export".split(" "))
             os.chdir(prev_wd)
     
     def run_indefinitely(self):

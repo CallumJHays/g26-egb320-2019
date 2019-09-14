@@ -16,21 +16,54 @@ import atexit
 from abc import ABC
 import os
 
+def dynamic_config(func):
+    def inner(self, *args):
+        global devices, config
+
+        # add static config if its not there yet
+        if self not in devices:
+            self.setup()
+
+        # copy the list so that we don't use the same reference
+        before = config.copy()
+        func(self, *args)
+
+        # define the dynamic config based on what pins have been added
+        self.dynamic_config = { k: config[k] for k in set(config) - set(before)}
+    return inner
+
 class GPIODevice(ABC):
 
+    # static config
     config = {}
 
+    # dynamic configs can be done by calling GPIO.setup() within a GPIODevice method
+    # decorated with the @GPIO.dynamic_config decorator (typically in __init__)
+
     def setup(self):
+        devices[self] = []
+
         if len(self.config) == 0:
             raise NotImplementedError("GPIO Device object has an empty config")
 
         for pin, cfg in self.config.values():
             if type(cfg) == GPIODevice:
                 cfg.setup()
-            elif type(cfg) == int:
+            elif type(cfg) == int: # direction type
                 setup(pin, cfg)
+                devices[self].append((pin, cfg))
             else:
                 raise Exception(f"config variable of type {type(cfg)}: {cfg}")
+
+
+    def cleanup(self):
+        cleanup((pin for pin, _ in devices[self]))
+        del devices[self]
+
+
+    def __del__(self):
+        self.cleanup()
+
 
 PI = pigpio.pi()
 
@@ -42,7 +75,7 @@ def setmode(cls):
     raise NotImplementedError("Only use BCM Mode Pin Numbering")
         
 
-# for GPIO -related errors
+# for GPIO -related errors; just extend the standard Exception but let people know it came from this module
 class Error(Exception):
     pass
 
@@ -51,8 +84,13 @@ class Error(Exception):
 # we don't step on eachothers' toes.
 config = {}
 
+# keep track of the mapping between devices and the pins they actually end up using.
+# this way devices can clean up their pins automagically with a device.cleanup() function.
+# with this you can have two devices plugged into the same pins with one being deactivated
+devices = {}
 
-class PWM(RPi.GPIO.PWM):
+
+class PWM(RPi.GPIO.PWM, GPIODevice):
 
     def __init__(self, pin, frequency=0):
         self.pin = pin
@@ -71,14 +109,18 @@ class PWM(RPi.GPIO.PWM):
     def ChangeFrequency(self, frequency):
         PI.set_PWM_frequency(self.pin, int(frequency))
 
+
     def start(self, dutycycle):
         self.ChangeDutyCycle(dutycycle)
+
 
     def stop(self):
         self.ChangeDutyCycle(0)
 
 
 def setup(pin, direction):
+    global config
+
     if config == {}: # if this is the first time anything has happened, 
         atexit.register(cleanup)
 
@@ -95,9 +137,10 @@ def setup(pin, direction):
     )
 
 
-def handle_misuse(expected_direction):
+def _handle_misuse(expected_direction):
     def wrapper(read_or_write_func):
         def result(pin, state=None):
+            global config
             if pin not in config:
                 raise Error(f"pin {pin} has not yet been setup()'d")
             declaration, direction = config[pin]
@@ -110,21 +153,42 @@ def handle_misuse(expected_direction):
     return wrapper
 
 
-@handle_misuse(expected_direction=OUTPUT)
+@_handle_misuse(expected_direction=OUTPUT)
 def output(pin, state):
     PI.write(pin, state)
 
 
-@handle_misuse(expected_direction=INPUT)
+@_handle_misuse(expected_direction=INPUT)
 def input(pin):
-    if pin not in config:
-        raise Error(f"pin {pin} has not yet been setup()'d")
     return PI.read(pin)
 
 
-def cleanup():
-    for pin, (_, direc) in config.items():
-        if direc == OUTPUT:
-            PI.write(pin, OFF)
-        
-        PI.set_mode(pin, INPUT)
+def cleanup(pins=None):
+    """
+    Cleanup pins if left as None, will cleanup all the pins.
+    Otherwise only the BCM pin numbers included in the pins[] array will be cleaned up
+    """
+    global devices
+
+    # if all pins were removed, we should remove all devices too
+    if pins == None:
+        # delete the devices synchronously
+        for device in devices:
+            del device
+
+        # we could have just set this, but the actual device.cleanup() destructor
+        # would only be called "at some point in the future" by the python interpreter.
+        # this could lead to weird unintended electrical defects.
+        devices = {}
+    
+    else:
+        # turn all the pins off and into input mode, then delete from config
+        for pin in pins:
+            _, direc = config[pin]
+
+            if direc == OUTPUT:
+                PI.write(pin, OFF)
+            
+            PI.set_mode(pin, INPUT)
+            del config[pin]
+    

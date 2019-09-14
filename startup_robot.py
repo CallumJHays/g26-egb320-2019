@@ -41,6 +41,7 @@ def get_lan_ip():
 
 
 def format_email(fr, to, subject, body):
+    # is broken :(
     from email import encoders
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -66,12 +67,15 @@ def main():
     CONTROL_SERVER_PORT = 3000
 
     print("Launching control server...")
-    server = ControlServer(CONTROL_SERVER_PORT)
+    try:
+        server = ControlServer(CONTROL_SERVER_PORT)
+    except Exception as e:
+        print("Control server failed to launch with exception", e)
 
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
 
-    print("Setting up an ngrok tunnels")
+    print("Setting up an ngrok tunnel to the control server")
     # public_ssh_url = ngrok.connect(22, 'tcp')
     control_server_url = ngrok.connect(CONTROL_SERVER_PORT, 'http')
     
@@ -100,6 +104,7 @@ def main():
 
     print("Sent detail update to", EMAIL)
     
+    print("Launching Control Server")
     server.run_indefinitely()
 
 
