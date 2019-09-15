@@ -116,3 +116,4 @@ fi
 export PATH="/home/pi/berryconda3/bin:$PATH"
 export PATH=/usr/local/clang_8.0.0/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/clang_8.0.0/lib:$LD_LIBRARY_PATH
+export GPIOZERO_PIN_FACTORY=rpio

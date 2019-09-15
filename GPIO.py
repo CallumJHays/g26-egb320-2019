@@ -7,9 +7,10 @@
     Always uses GPIO BCM mode (ie refer to the numbers in the outer labels in the pinouts)
 """
 
-import RPIO
+
 import RPi.GPIO
-from RPi.GPIO import OUT
+from RPi.GPIO import OUT, IN
+from gpiozero import PWMOutputDevice, LED, Button, GPIODevice as GPIOZDev, OutputDevice
 from inspect import getframeinfo, stack
 import atexit
 from abc import ABC
@@ -50,29 +51,20 @@ class GPIODevice(ABC):
             raise NotImplementedError("GPIO Device object has an empty config (both static and dynamic)")
 
         for pin, cfg in { **self.config, **self.dynamic_config }.values():
-            if type(cfg) == GPIODevice:
+            if isinstance(cfg, GPIODevice):
                 cfg.setup()
-            elif type(cfg) == int: # direction type
+            elif isinstance(cfg, int): # direction type
                 setup(pin, cfg)
+                devices[self].append((pin, cfg))
+            elif isinstance(cfg, GPIOZDev):
+                setup(pin, isinstance(cfg, OutputDevice))
                 devices[self].append((pin, cfg))
             else:
                 raise Exception(f"config variable of type {type(cfg)}: {cfg}")
 
 
-    def cleanup(self):
-        cleanup((pin for pin, _ in devices[self]))
-        del devices[self]
-
-
-    def __del__(self):
-        self.cleanup()
-
-
-RPIO.setmode(RPIO.BOARD)
-
-
 def setmode(cls):
-    raise NotImplementedError("Only use Board Mode Pin Numbering")
+    raise NotImplementedError("Only use BCM Mode Pin Numbering")
         
 
 # for GPIO -related errors; just extend the standard Exception but let people know it came from this module
@@ -93,35 +85,26 @@ devices = {}
 
 class PWM(RPi.GPIO.PWM, GPIODevice):
 
-    MICROSEC_PER_SEC = 1000000
-    N_DMA_CHANELS = 15
-    USED_DMA_CHANNELS = []
-
-
-    def __init__(self, pin, frequency=0):
-
-        if len(self.USED_DMA_CHANNELS) == self.N_DMA_CHANELS:
-            raise Error("Ran out of DMA channels with which to use hardware PWM")
-
+    def __init__(self, pin, frequency=1, dutycycle=0):
+        assert frequency > 0
         self.pin = pin
         self.frequency = frequency
-        self.dutycycle = None
+        self.dutycycle = dutycycle
 
-        self.dma = next(dma for dma in range(self.N_DMA_CHANELS) if dma not in self.USED_DMA_CHANNELS)
-        RPIO.PWM.init_channel(self.dma)
-        self.USED_DMA_CHANNELS.append(self.dma)
-
-        self.ChangeFrequency(self.frequency)
+        self.pwm = PWMOutputDevice(self.pin, initial_value=True)
+        self.ChangeDutyCycle(dutycycle)
+        self.ChangeFrequency(frequency)
 
 
     def ChangeDutyCycle(self, dutycycle):
-        assert 0 <= dutycycle and dutycycle <= 100
-        dutycycle = int(2.55 * dutycycle)
-        self.servo.set_servo(self.pin, self.MICROSEC_PER_SEC // self.frequency)
+        assert 0 <= dutycycle and dutycycle <= 1
+        self.dutycycle = dutycycle
+        self.pwm.value = self.dutycycle
 
 
     def ChangeFrequency(self, frequency):
-        self.servo.set_servo(self.pin, self.MICROSEC_PER_SEC // self.frequency)
+        self.frequency = frequency
+        self.pwm.frequency = frequency
 
 
     def start(self, dutycycle):
@@ -134,80 +117,50 @@ class PWM(RPi.GPIO.PWM, GPIODevice):
 
     def cleanup(self):
         super().cleanup()
-        RPIO.PWM.clear_channel_gpio(self.dma, self.pin)
+        self.pwm.off()
 
 
 def setup(pin, direction):
     global config
 
-    if config == {}: # if this is the first time anything has happened, 
-        atexit.register(cleanup)
-
     if pin in config:
         raise Error(f"pin {pin} already in use. (check its declaration at {config[pin][0]})")
 
-    RPIO.setup(pin, RPIO.OUT if direction == OUT else RPIO.IN)
-
+    device = LED(pin) if direction == OUT else Button(pin)
+    
     caller = getframeinfo(stack()[1][0])
 
     config[pin] = (
         f"{os.path.abspath(caller.filename)}, line {caller.lineno}",
-        direction
+        device
     )
 
 
-def _handle_misuse(expected_direction):
+def _handle_misuse(ExpectedDevice):
     def wrapper(read_or_write_func):
         def result(pin, state=None):
             global config
             if pin not in config:
                 raise Error(f"pin {pin} has not yet been setup()'d")
-            declaration, direction = config[pin]
-            if direction != expected_direction:
+            declaration, device = config[pin]
+            if isinstance(device, ExpectedDevice):
                 raise Error(f"""\
                     pin {pin} is attempting to output but has not been setup()'d with direction=OUTPUT. \
-                    Expected {expected_direction}, got {direction}. Refer to declaration: {declaration}""")
+                    Expected {ExpectedDevice}, got {device}. Refer to declaration: {declaration}""")
             
         return result
     return wrapper
 
 
-@_handle_misuse(expected_direction=RPIO.OUT)
+@_handle_misuse(ExpectedDevice=LED)
 def output(pin, state):
-    RPIO.output(pin, state)
+    _, led = config[pin]
+    assert isinstance(led, LED)
+    led.value = state
 
 
-@_handle_misuse(expected_direction=RPIO.IN)
+@_handle_misuse(ExpectedDevice=Button)
 def input(pin):
-    return RPIO.input(pin)
-
-
-def cleanup(pins=None):
-    """
-    Cleanup pins if left as None, will cleanup all the pins.
-    Otherwise only the BCM pin numbers included in the pins[] array will be cleaned up
-    """
-    global devices
-
-    # if all pins were removed, we should remove all devices too
-    if pins == None:
-        # delete the devices synchronously
-        for device in devices:
-            del device
-
-        # we could have just set this, but the actual device.cleanup() destructor
-        # would only be called "at some point in the future" by the python interpreter.
-        # this could lead to weird unintended electrical defects.
-        devices = {}
-    
-    else:
-        # turn all the pins off and into input mode, then delete from config
-        for pin in pins:
-            _, direc = config[pin]
-
-            if direc == OUT:
-                RPIO.output(pin, RPIO.OUT)
-            
-            RPIO.setup(pin, RPIO.IN)
-            del config[pin]
-    
+    _, button = config[pin]
+    assert isinstance(button, Button)
+    return button.is_held
