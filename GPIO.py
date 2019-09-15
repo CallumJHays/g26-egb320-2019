@@ -7,8 +7,7 @@
     Always uses GPIO BCM mode (ie refer to the numbers in the outer labels in the pinouts)
 """
 
-import pigpio
-from pigpio import INPUT, OUTPUT, ON, OFF
+import RPIO
 import RPi.GPIO
 from RPi.GPIO import OUT
 from inspect import getframeinfo, stack
@@ -16,21 +15,22 @@ import atexit
 from abc import ABC
 import os
 
-def dynamic_config(func):
-    def inner(self, *args):
-        global devices, config
 
-        # add static config if its not there yet
-        if self not in devices:
-            self.setup()
+def dynamic_config(func):
+    def inner(self, *args, **kwargs):
+        global devices, config
 
         # copy the list so that we don't use the same reference
         before = config.copy()
-        func(self, *args)
+        func(self, *args, **kwargs)
+
+        print('before', before)
+        print('after', config)
 
         # define the dynamic config based on what pins have been added
         self.dynamic_config = { k: config[k] for k in set(config) - set(before)}
     return inner
+
 
 class GPIODevice(ABC):
 
@@ -43,10 +43,13 @@ class GPIODevice(ABC):
     def setup(self):
         devices[self] = []
 
-        if len(self.config) == 0:
-            raise NotImplementedError("GPIO Device object has an empty config")
+        if not hasattr(self, 'dynamic_config'):
+            self.dynamic_config = {}
 
-        for pin, cfg in self.config.values():
+        if len(self.config) == 0 and len(self.dynamic_config) == 0:
+            raise NotImplementedError("GPIO Device object has an empty config (both static and dynamic)")
+
+        for pin, cfg in { **self.config, **self.dynamic_config }.values():
             if type(cfg) == GPIODevice:
                 cfg.setup()
             elif type(cfg) == int: # direction type
@@ -65,14 +68,11 @@ class GPIODevice(ABC):
         self.cleanup()
 
 
-PI = pigpio.pi()
-
-# utilise Python exception handling
-pigpio.exceptions = True
+RPIO.setmode(RPIO.BOARD)
 
 
 def setmode(cls):
-    raise NotImplementedError("Only use BCM Mode Pin Numbering")
+    raise NotImplementedError("Only use Board Mode Pin Numbering")
         
 
 # for GPIO -related errors; just extend the standard Exception but let people know it came from this module
@@ -84,6 +84,7 @@ class Error(Exception):
 # we don't step on eachothers' toes.
 config = {}
 
+
 # keep track of the mapping between devices and the pins they actually end up using.
 # this way devices can clean up their pins automagically with a device.cleanup() function.
 # with this you can have two devices plugged into the same pins with one being deactivated
@@ -92,10 +93,23 @@ devices = {}
 
 class PWM(RPi.GPIO.PWM, GPIODevice):
 
+    MICROSEC_PER_SEC = 1000000
+    N_DMA_CHANELS = 15
+    USED_DMA_CHANNELS = []
+
+
     def __init__(self, pin, frequency=0):
+
+        if len(self.USED_DMA_CHANNELS) == self.N_DMA_CHANELS:
+            raise Error("Ran out of DMA channels with which to use hardware PWM")
+
         self.pin = pin
         self.frequency = frequency
         self.dutycycle = None
+
+        self.dma = next(dma for dma in range(self.N_DMA_CHANELS) if dma not in self.USED_DMA_CHANNELS)
+        RPIO.PWM.init_channel(self.dma)
+        self.USED_DMA_CHANNELS.append(self.dma)
 
         self.ChangeFrequency(self.frequency)
 
@@ -103,11 +117,11 @@ class PWM(RPi.GPIO.PWM, GPIODevice):
     def ChangeDutyCycle(self, dutycycle):
         assert 0 <= dutycycle and dutycycle <= 100
         dutycycle = int(2.55 * dutycycle)
-        PI.set_PWM_dutycycle(self.pin, dutycycle)
+        self.servo.set_servo(self.pin, self.MICROSEC_PER_SEC // self.frequency)
 
 
     def ChangeFrequency(self, frequency):
-        PI.set_PWM_frequency(self.pin, int(frequency))
+        self.servo.set_servo(self.pin, self.MICROSEC_PER_SEC // self.frequency)
 
 
     def start(self, dutycycle):
@@ -116,6 +130,11 @@ class PWM(RPi.GPIO.PWM, GPIODevice):
 
     def stop(self):
         self.ChangeDutyCycle(0)
+
+
+    def cleanup(self):
+        super().cleanup()
+        RPIO.PWM.clear_channel_gpio(self.dma, self.pin)
 
 
 def setup(pin, direction):
@@ -127,7 +146,7 @@ def setup(pin, direction):
     if pin in config:
         raise Error(f"pin {pin} already in use. (check its declaration at {config[pin][0]})")
 
-    PI.set_mode(pin, pigpio.OUTPUT if direction == OUT else pigpio.INPUT)
+    RPIO.setup(pin, RPIO.OUT if direction == OUT else RPIO.IN)
 
     caller = getframeinfo(stack()[1][0])
 
@@ -153,14 +172,14 @@ def _handle_misuse(expected_direction):
     return wrapper
 
 
-@_handle_misuse(expected_direction=OUTPUT)
+@_handle_misuse(expected_direction=RPIO.OUT)
 def output(pin, state):
-    PI.write(pin, state)
+    RPIO.output(pin, state)
 
 
-@_handle_misuse(expected_direction=INPUT)
+@_handle_misuse(expected_direction=RPIO.IN)
 def input(pin):
-    return PI.read(pin)
+    return RPIO.input(pin)
 
 
 def cleanup(pins=None):
@@ -186,9 +205,9 @@ def cleanup(pins=None):
         for pin in pins:
             _, direc = config[pin]
 
-            if direc == OUTPUT:
-                PI.write(pin, OFF)
+            if direc == OUT:
+                RPIO.output(pin, RPIO.OUT)
             
-            PI.set_mode(pin, INPUT)
+            RPIO.setup(pin, RPIO.IN)
             del config[pin]
     
