@@ -15,7 +15,16 @@ import socket
 from urllib.request import urlopen, URLError
 from npm.bindings import npm_run
 from pathlib import Path
+
+
 from ControlServer import ControlServer
+from VisionSystem import VisionSystem, VisualObject, VideoStream
+from VisionSystem.DetectionModel import ThreshBlob
+
+
+# helper
+def relpath(*paths):
+    return os.path.join(os.path.dirname(__file__), *paths)
 
 
 def wait_for_internet_connection():
@@ -58,17 +67,36 @@ def format_email(fr, to, subject, body):
     return message.as_string()
 
 
-def main():
-    SSL_PORT = 465
-    EMAIL = "egb320.2019.g26@gmail.com"
-    EMAIL_PASSWORD = "rustisthebest"
-    EMAIL_SERVER = "smtp.gmail.com"
 
+
+# load detection models and setup vision system with all objects' sizes for distance
+# detection
+def setup_vision_system(resolution):
+    objects_to_size_and_result_limit = [
+        ("ball", (0.043, 0.043, 0.043), 1),
+        ("obstacle", (0.18, 0.18, 0.2), None),
+        ("blue_goal", (0.3, 0.3, 0.1), 1), # 30 centimetres long, 10 cm high? i guess
+        ("yellow_goal", (0.3, 0.3, 0.1), 1)
+    ]
+
+    return VisionSystem(camera_pixel_width=resolution[0], objects_to_track={
+        name: VisualObject(
+            real_size=size,
+            detection_model=ThreshBlob.load(relpath("models", f"{name}.threshblob.pkl")),
+            result_limit=result_limit
+        ) for name, size, result_limit in objects_to_size_and_result_limit
+    })
+
+
+def main():
     CONTROL_SERVER_PORT = 3000
+
+    video_stream = VideoStream()
+    vision_system = setup_vision_system(video_stream.resolution)
 
     print("Launching control server...")
     try:
-        server = ControlServer(CONTROL_SERVER_PORT)
+        server = ControlServer(port=CONTROL_SERVER_PORT, video_stream=video_stream, vision_system=vision_system)
     except Exception as e:
         print("Control server failed to launch with exception", e)
 
@@ -84,6 +112,18 @@ def main():
 
     lan_ip = get_lan_ip()
     print("local ip:", lan_ip)
+
+    send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
+    
+    print("Launching Control Server")
+    server.run_indefinitely()
+
+
+def send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT):
+    SSL_PORT = 465
+    EMAIL = "egb320.2019.g26@gmail.com"
+    EMAIL_PASSWORD = "rustisthebest"
+    EMAIL_SERVER = "smtp.gmail.com"
 
     print("Sending email to", EMAIL, "with Gmail SMTP server")
     with smtplib.SMTP_SSL(EMAIL_SERVER, SSL_PORT, context=ssl.create_default_context()) as mail:
@@ -101,11 +141,8 @@ def main():
             EMAIL, EMAIL,
             format_email(EMAIL, EMAIL, subject, email_body)
         )
-
     print("Sent detail update to", EMAIL)
-    
-    print("Launching Control Server")
-    server.run_indefinitely()
+
 
 
 if __name__ == '__main__':

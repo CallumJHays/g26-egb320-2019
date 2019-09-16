@@ -1,17 +1,32 @@
-from GPIO import GPIO
+import GPIO
 import time
 
 
-class KickerSystem():
+class KickerSystem(GPIO.GPIODevice):
 
-    def __init__(self):
-        raise NotImplementedError
+    KICK_ENABLE = 23
+    DRIBBLE_ENABLE = 24
+    LASERGATE = 25
+
+
+    config = {
+        KICK_ENABLE: GPIO.OUT,
+        DRIBBLE_ENABLE: GPIO.OUT,
+        LASERGATE: GPIO.IN
+    }
+
 
     def start_dribbling(self):
-        raise NotImplementedError
+        GPIO.output(self.DRIBBLE_ENABLE, True)
+
 
     def stop_dribbling(self):
-        raise NotImplementedError
+        GPIO.output(self.DRIBBLE_ENABLE, False)
 
-    def kick(self):
-        raise NotImplementedError
+
+    def start_kicking(self):
+        GPIO.output(self.KICK_ENABLE, True)
+
+
+    def stop_kicking(self):
+        GPIO.output(self.KICK_ENABLE, False)

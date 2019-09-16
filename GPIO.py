@@ -50,7 +50,7 @@ class GPIODevice(ABC):
         if len(self.config) == 0 and len(self.dynamic_config) == 0:
             raise NotImplementedError("GPIO Device object has an empty config (both static and dynamic)")
 
-        for pin, cfg in { **self.config, **self.dynamic_config }.values():
+        for pin, cfg in { **self.config, **self.dynamic_config }.items():
             if isinstance(cfg, GPIODevice):
                 cfg.setup()
             elif isinstance(cfg, int): # direction type
@@ -143,10 +143,11 @@ def _handle_misuse(ExpectedDevice):
             if pin not in config:
                 raise Error(f"pin {pin} has not yet been setup()'d")
             declaration, device = config[pin]
-            if isinstance(device, ExpectedDevice):
+            if not isinstance(device, ExpectedDevice):
                 raise Error(f"""\
                     pin {pin} is attempting to output but has not been setup()'d with direction=OUTPUT. \
                     Expected {ExpectedDevice}, got {device}. Refer to declaration: {declaration}""")
+            read_or_write_func(pin, state)
             
         return result
     return wrapper
@@ -156,11 +157,14 @@ def _handle_misuse(ExpectedDevice):
 def output(pin, state):
     _, led = config[pin]
     assert isinstance(led, LED)
-    led.value = state
+    if state:
+        led.on()
+    else:
+        led.off()
 
 
 @_handle_misuse(ExpectedDevice=Button)
-def input(pin):
+def input(pin, state=None):
     _, button = config[pin]
     assert isinstance(button, Button)
     return button.is_held

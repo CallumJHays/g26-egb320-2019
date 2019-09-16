@@ -1,7 +1,6 @@
 #!/bin/bash
 
 rsync -avzuiP ./* localpi:~/SoccerRobot \
-    --delete \
     --exclude data \
     --exclude ControlServer/out \
     --exclude ControlServer/.next \
