@@ -134,10 +134,11 @@ export default ({
   <App>
     {isMenuOpen ? <Menu onClose={() => setMenuOpen(false)} /> : null}
     <Container>
-
-      <Joystick height='100vh' bgText={`↑
-      ← STRAFE →
-      ↓`}/>
+      <div>
+        <Joystick height='100vh' bgText={`↑
+        ← STRAFE →
+        ↓`}/>
+      </div>
 
       <RightSide>
         <Joystick height='50vh' bgText="↶ ROTATE ↷" />

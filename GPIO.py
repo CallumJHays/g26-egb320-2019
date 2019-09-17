@@ -97,9 +97,9 @@ class PWM(RPi.GPIO.PWM, GPIODevice):
 
 
     def ChangeDutyCycle(self, dutycycle):
-        assert 0 <= dutycycle and dutycycle <= 1
+        assert 0 <= dutycycle and dutycycle <= 100
         self.dutycycle = dutycycle
-        self.pwm.value = self.dutycycle
+        self.pwm.value = self.dutycycle / 100
 
 
     def ChangeFrequency(self, frequency):

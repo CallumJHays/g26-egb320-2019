@@ -2,13 +2,17 @@ from sanic import Blueprint, Sanic, response
 from pathlib import Path
 from threading import Thread
 import subprocess
-import os
+import os, sys
 import io
 import logging
 import socketserver
 from threading import Condition
 from http import server
-from VisionSystem import VisionSystem
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from VisionSystem import VideoStream, VisionSystem, VisualObject
+from VisionSystem.DetectionModel import ThreshBlob
 
 SERVER_BASE_DIR = Path(__file__).parents[0]
 CLIENT_STATICS_DIR = SERVER_BASE_DIR / 'out'
@@ -17,6 +21,10 @@ SERVER_STATICS_DIR = SERVER_BASE_DIR / 'static'
 app = Blueprint("ControlServer")
 
 app.static('/', str(CLIENT_STATICS_DIR))
+
+# helper
+def relpath(*paths):
+    return os.path.join(os.path.dirname(__file__), *paths)
 
 
 @app.route('/')
@@ -101,3 +109,23 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
+
+
+if __name__ == "__main__":
+    video_stream = VideoStream() # use any available live feed device such as a webcam
+    
+    objects_to_size_and_result_limit = {
+        "ball": ((0.043, 0.043, 0.043), 1),
+        "obstacle": ((0.18, 0.18, 0.2), None),
+        "blue_goal": ((0.3, 0.3, 0.1), 1), # 30 centimetres long, 10 cm high? i guess
+        "yellow_goal": ((0.3, 0.3, 0.1), 1)
+    }
+
+    vision_system = VisionSystem(camera_pixel_width=video_stream.resolution[0], objects_to_track={
+        name: VisualObject(
+            real_size=size,
+            detection_model=ThreshBlob.load(relpath("..", "models", f"{name}.threshblob.pkl")),
+            result_limit=result_limit
+        ) for name, (size, result_limit) in objects_to_size_and_result_limit.items()
+    })
+    ControlServer(8080, video_stream=video_stream, vision_system=vision_system)

@@ -55,7 +55,7 @@ class ThreshBlob(DetectionModel):
                 (max(y - contour_padding, 0), min(y + contour_padding, height)),
                 (max(x - contour_padding, 0), min(x + contour_padding, width))
             )
-            _, contours, _ = cv2.findContours(
+            contours, _ = cv2.findContours(
                 mask[roi[0][0]:roi[0][1], roi[1][0]:roi[1][1]].copy(),
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE

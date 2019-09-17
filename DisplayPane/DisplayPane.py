@@ -2,6 +2,8 @@ import bqplot as bq
 import ipywidgets as ipy
 import cv2
 import numpy as np
+from threading import Thread
+
 from VisionSystem.DetectionModel import Frame, ColorSpaces
 
 
@@ -112,10 +114,20 @@ class DisplayPane(ipy.VBox):
             self.make_reset_zoom_button()
         ]
         
-        if self.video_stream is not None and self.video_stream.on_disk:
-            widget_list.append(self.make_video_controller())
+        if self.video_stream is not None:
+            if self.video_stream.on_disk:
+                widget_list.append(self.make_video_controller())
+            else:
+                # start the livestream pipe to this displaypane on a separate thread
+                Thread(target=self.pipe_livestream).start()
 
         return ipy.HBox(widget_list)
+
+    
+    def pipe_livestream(self):
+        for frame in self.video_stream:
+            self.raw_frame = frame
+            self.update_data_and_display()
         
 
     def make_toggle_panzoom_button(self, image_plot):
