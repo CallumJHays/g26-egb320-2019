@@ -7,7 +7,7 @@ from copy import copy
 
 class Thresholder():
 
-    def __init__(self, colorspace=ColorSpaces.BGR, lower=None, upper=None, erosion1=0, dilation1=0, erosion2=0, dilation2=0):
+    def __init__(self, colorspace=ColorSpaces.BGR, erosion1=0, dilation1=0, erosion2=0, dilation2=0):
         # colorspace <ColorSpace>
         # the colorspace in which the threshold resides
         if colorspace in ColorSpaces:
@@ -20,12 +20,13 @@ class Thresholder():
         # lower list<int>
         # the lower bound of the accepted threshold range. Typically a 1x3 np.array
         # (depends on the color space)
-        self.lower = lower or [0, 0, 0]
+        limits = self.colorspace.channel_limits()
+        self.lower = [lower for lower, _ in limits]
         
-        # lower list<int>
+        # upper list<int>
         # the upper bound of the accepted threshold range. Typically a 1x3 np.array
         # (depends on the color space)
-        self.upper = upper or [255, 255, 255]
+        self.upper = [upper for _, upper in limits]
 
         self.dilation1 = dilation1
         self.erosion1 = erosion1
@@ -74,6 +75,8 @@ class Thresholder():
             mask = cv2.dilate(mask, kernel, iterations=self.dilation2)
         if self.erosion2 > 0:
             mask = cv2.erode(mask, kernel, iterations=self.erosion2)
+
+        frame.mask = mask
         return mask
 
 

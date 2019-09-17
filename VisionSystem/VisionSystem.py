@@ -38,17 +38,19 @@ class VisionSystem():
 
     def update_with_and_label_frame(self, frame):
         self.update_with_frame(frame)
-        return self.label_frame(frame)
+        self.label_frame(frame)
 
         
     def label_frame(self, frame):
-        img = frame.get()
+        img = frame.get(ColorSpaces.BGR)
+        img_textboxed = None
         for obj_idx, (name, obj_type) in enumerate(self.objects_to_track.items()):
             for res_idx, (result, (bearing, distance)) in enumerate(zip(obj_type.detection_results, obj_type.bearings_distances)):
+                MASK_COLOR = (1,)
+                
                 draw_color = VisionSystem.CATEGORICAL_COLORS[obj_idx]
-                img = cv2.rectangle(img, result.coords[0], result.coords[1], draw_color)
-
-                img = cv2.putText(
+                draw_bounding_box = lambda img, draw_color: cv2.rectangle(img, result.coords[0], result.coords[1], draw_color)
+                draw_text = lambda img, draw_color: cv2.putText(
                     img,
                     text="%s%d: %.2fcm@%.0fdeg" % (name, res_idx, distance * 100, math.degrees(bearing)),
                     org=(result.coords[0][0], result.coords[0][1] - 10),
@@ -56,7 +58,15 @@ class VisionSystem():
                     fontScale=1,
                     color=draw_color
                 )
-        return img
+
+                img_boxed = draw_bounding_box(img, draw_color)
+                img_textboxed = draw_text(img_boxed, draw_color)
+                mask_boxed = draw_bounding_box(frame.mask, draw_color=MASK_COLOR)
+                mask_textboxed = draw_bounding_box(mask_boxed, draw_color=MASK_COLOR)
+                frame.mask = mask_textboxed
+                
+        if img_textboxed is not None:
+            frame.link(img_textboxed, ColorSpaces.BGR)
 
 
 def update_obj(obj, frame):

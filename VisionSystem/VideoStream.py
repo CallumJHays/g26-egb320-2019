@@ -1,7 +1,7 @@
 import cv2
 from threading import Thread, Event
 import numpy as np
-from .DetectionModel import Frame
+from .DetectionModel import Frame, ColorSpaces
 from time import time
 try:
     from picamera import PiCamera, PiResolution
@@ -35,7 +35,7 @@ class FrameIterator():
         if image.shape != stream.resolution + (3,):
             image = cv2.resize(image, stream.resolution)
 
-        return Frame(image)
+        return Frame(image, ColorSpaces.BGR)
 
 
 # Asynchronous camera / video-stream class
@@ -111,7 +111,7 @@ class VideoStream():
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         if bgr_img.shape != self.resolution + (3,):
             bgr_img = cv2.resize(bgr_img, self.resolution)
-        return Frame(bgr_img)
+        return Frame(bgr_img, ColorSpaces.BGR)
 
     
     def start(self):

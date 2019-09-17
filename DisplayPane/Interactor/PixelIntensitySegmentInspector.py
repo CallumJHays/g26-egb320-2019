@@ -65,7 +65,7 @@ class PixelIntensitySegmentInspector(Interactor):
     def update_pixel_intensities_mark(self):
         if len(self.segment_selector.segment_mark.y) == 2:
 
-            img = self.display_pane.filtered_img
+            img = self.display_pane.filtered_frame.get(self.display_pane.display_colorspace)
             height, width, _ = img.shape
 
             ys = []
@@ -78,7 +78,13 @@ class PixelIntensitySegmentInspector(Interactor):
             init_y = max(init_y, 0)
             final_y = min(final_y, height)
             
-            gradient = (final_y - init_y) / (final_x - init_x)
+            den = (final_x - init_x)
+            if den == 0:
+                self.pixel_intensities_mark.x = np.empty(shape=(0,))
+                self.pixel_intensities_mark.y = np.empty(shape=(0,))
+                return
+
+            gradient = (final_y - init_y) / den
             direction = int(gradient / abs(gradient))
             curr_y = init_y
             

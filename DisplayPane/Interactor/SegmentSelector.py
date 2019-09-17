@@ -1,6 +1,7 @@
 from .Interactor import Interactor
 import bqplot as bq
 import ipywidgets as ipy
+import numpy as np
 
 class SegmentSelector(Interactor):
     
@@ -46,12 +47,15 @@ class SegmentSelector(Interactor):
 
         def on_interaction(change):
             if change['name'] == 'selected_x':
-                mark.x = change['new']
+                mark.x = np.empty(shape=(0,)) if change['new'] is None else change['new'] 
             elif change['name'] == 'selected_y':
-                if self.segment_draw_diagonal:
-                    mark.y = list(reversed(change['new']))
+                if change['new'] is None:
+                    mark.y = np.empty(shape=(0,))
                 else:
-                    mark.y = change['new']
+                    if self.segment_draw_diagonal:
+                        mark.y = list(reversed(change['new']))
+                    else:
+                        mark.y = change['new']
             self.update_observers()
 
         drawer.observe(on_interaction, ['selected_x', 'selected_y'])

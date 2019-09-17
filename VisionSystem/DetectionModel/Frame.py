@@ -6,36 +6,47 @@ import numpy as np
 
 class Frame():
     
-    def __init__(self, bgr_img):
-        self.link_bgr(bgr_img)
+    def __init__(self, img, colorspace):
+        self.link(img, colorspace)
+        self.mask = None
 
 
-    def get(self, colorspace=ColorSpaces.BGR):
-        if type(colorspace) is ColorSpace:
+    def get(self, colorspace):
+        if isinstance(colorspace, ColorSpaces) or isinstance(colorspace, ColorSpace):
             colorspace = ColorSpaces[colorspace.name]
         
         if colorspace in self.colorspace2img:
             return self.colorspace2img[colorspace]
         else:
-            self.colorspace2img[colorspace] = colorspace.value.bgr2this(self.get())
+            self.colorspace2img[colorspace] = colorspace.value.bgr2this(self.get(ColorSpaces.BGR))
             return self.colorspace2img[colorspace]
+        
+        raise "Couldn't find"
 
 
-    def link_bgr(self, bgr_img):
+    def link(self, img, colorspace):
         self.colorspace2img = {
-            ColorSpaces.BGR: bgr_img
+            colorspace: img
         }
 
 
-    def copy_bgr(self, bgr_img):
-        if bgr_img is None:
-            raise "error"
+    def copy(self, img, colorspace):
+        if isinstance(img, Frame):
+            img = img.get(colorspace)
+
         self.colorspace2img = {
-            ColorSpaces.BGR: np.copy(bgr_img)
+            colorspace: np.copy(img)
         }
+    
+    def copy_mask(self, mask):
+        if isinstance(mask, Frame) and mask.mask is not None:
+            self.mask = np.copy(mask.mask)
+        else:
+            self.mask = np.copy(mask)
+
 
     @staticmethod
     def copy_of(frame):
-        this = Frame(np.array([]))
-        this.copy_bgr(frame.get())
+        this = Frame(np.array([]), ColorSpaces.BGR)
+        this.copy(frame, ColorSpaces.BGR)
         return this

@@ -15,7 +15,7 @@ class DisplayPane(ipy.VBox):
     FULL_OFFSET = 240
 
     def __init__(self, video_stream=None, img_path=None, img=None, interactors=None, size=0.5, vision_system=None, frame=None, \
-            filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR.value, **kwargs):
+            filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR, **kwargs):
 
         if not (video_stream is not None) ^ (img is not None) ^ (frame is not None) ^ (img_path is not None):
             raise Exception("either path, img or frame must be defined, and not both")
@@ -31,11 +31,7 @@ class DisplayPane(ipy.VBox):
         self.apply_filter_to_vision_system_input = apply_filter_to_vision_system_input
         self.image_plot_scales = {'x': bq.LinearScale(), 'y': bq.LinearScale()}
         self.hidden = False
-
-        if display_colorspace in ColorSpaces:
-            self.display_colorspace = display_colorspace.value
-        else:
-            self.display_colorspace = display_colorspace
+        self.display_colorspace = display_colorspace
 
         self.update_frame_cbs = update_frame_cbs or []
         
@@ -44,11 +40,11 @@ class DisplayPane(ipy.VBox):
             if frame is not None and type(frame is Frame):
                 self.raw_frame = frame
             elif img_path is not None:
-                self.raw_frame = Frame(cv2.imread(img_path))
+                self.raw_frame = Frame(cv2.imread(img_path), ColorSpaces.BGR)
             else:
                 self.raw_frame = next(iter(self.video_stream))
         else:
-            self.raw_frame = Frame(img)
+            self.raw_frame = Frame(img, ColorSpaces.BGR)
 
         self.filtered_frame = Frame.copy_of(self.raw_frame)
         self.labelled_frame = Frame.copy_of(self.filtered_frame)
@@ -99,8 +95,9 @@ class DisplayPane(ipy.VBox):
             padding_y=0
         )
         
-        height, width, _ = self.raw_frame.get().shape
+        height, width, _ = self.raw_frame.get(ColorSpaces.BGR).shape
         # make sure the image is displayed with the correct aspect ratio
+        # TODO: is this broken?
         image_plot.layout.width = '100%'
         image_plot.layout.margin = '0'
         image_plot.layout.height = str(self.size * self.FULL_INTERNAL_WIDTH * height / width + self.size * self.FULL_OFFSET) + 'px'
@@ -222,18 +219,22 @@ class DisplayPane(ipy.VBox):
     def update_data_and_display(self):
         if not self.hidden:
             # filter the image if need be
-            self.filtered_frame.copy_bgr(self.raw_frame.get())
+            self.filtered_frame.copy(self.raw_frame, ColorSpaces.BGR)
             if self.filter_fn is not None:
-                self.filtered_frame.link_bgr(self.filter_fn(self.filtered_frame))
+                self.filtered_frame.link(self.filter_fn(self.filtered_frame), ColorSpaces.BGR)
             
-            self.labelled_frame.copy_bgr(self.filtered_frame.get())
+            self.labelled_frame.copy(self.filtered_frame, ColorSpaces.BGR)
             if self.vision_system is not None:
-                self.labelled_frame.link_bgr(self.vision_system.update_with_and_label_frame(self.labelled_frame))
+                self.vision_system.update_with_and_label_frame(self.labelled_frame)
 
             for cb in self.update_frame_cbs:
                 cb()
             
-            ipy_img = ipy.Image(value=cv2.imencode('.jpg', self.labelled_frame.get(self.display_colorspace))[1].tostring(), format='jpg')
+            bgr_img = self.labelled_frame.get(self.display_colorspace)
+            # apply the mask here for view purposes
+            if self.labelled_frame.mask is not None:
+                bgr_img = cv2.bitwise_and(bgr_img, bgr_img, mask=self.labelled_frame.mask)
+            ipy_img = ipy.Image(value=cv2.imencode('.jpg', bgr_img)[1].tostring(), format='jpg')
             
             if self.bq_img is None:
                 self.bq_img = bq.Image(image=ipy_img, scales=self.image_plot_scales)

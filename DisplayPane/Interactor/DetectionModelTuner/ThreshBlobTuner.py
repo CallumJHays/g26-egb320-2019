@@ -1,5 +1,6 @@
 from .DetectionModelTunerABC import DetectionModelTunerABC
 from ..ColorSpacePicker import ColorSpacePicker
+from ..PixelIntensitySegmentInspector import PixelIntensitySegmentInspector
 import ipywidgets as ipy
 from VisionSystem import VisionSystem, VisualObject
 from VisionSystem.DetectionModel import ColorSpaces, ColorSpaceScale
@@ -23,17 +24,12 @@ class ThreshBlobTuner(DetectionModelTunerABC):
 
     def make_thresholder_controls(self):
         colorspace_picker = ColorSpacePicker(colorspace=self.detection_model.thresholder.colorspace)
-
-        def threshold_with_color(frame):
-            mask = self.detection_model.thresholder.apply(frame)
-            img = frame.get(ColorSpaces.BGR)
-            return cv2.bitwise_and(img, img, mask=mask)
+        segment_inspector = PixelIntensitySegmentInspector()
 
         self.model_display = DisplayPane(
             frame=self.display_pane.raw_frame,
             size=self.display_pane.size,
-            interactors=[colorspace_picker],
-            filter_fn=threshold_with_color,
+            interactors=[colorspace_picker, segment_inspector],
             vision_system=VisionSystem(
                 objects_to_track={ 'obj': VisualObject(detection_model=self.detection_model) },
                 camera_pixel_width=self.display_pane.video_stream.resolution[0]
@@ -67,7 +63,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             channel_sliders.append(slider)
 
         def on_colorspace_change():
-            thresh.colorspace = colorspace_picker.colorspace
+            thresh.colorspace = colorspace_picker.colorspace.value
 
             # update the descriptions
             for idx, slider in enumerate(channel_sliders):
@@ -113,7 +109,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
 
         def on_change_erosion_dilation(attr):
             def update(change):
-                thresh[attr] = change['new']
+                setattr(thresh, attr, change['new'])
                 self.model_display.update_data_and_display()
             return update
 
@@ -152,8 +148,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                     if param_name == 'Area':
                         newMin = math.exp(newMin)
                         newMax = math.exp(newMax)
-                    self.detection_model.blob_detector_params['min' + param_name, newMin]
-                    self.detection_model.blob_detector_params['max' + param_name, newMax]
+                    self.detection_model.blob_detector_params['min' + param_name] = newMin
+                    self.detection_model.blob_detector_params['max' + param_name] = newMax
                     self.model_display.update_data_and_display()
                 return update
 
