@@ -29,11 +29,14 @@ class DriveSystem(GPIO.GPIODevice):
     ROTATION_VEL_2_ACC_TUNER_CONSTANT = 5
     LENGTH_CENTER_2_WHEEL = 0.08 # m
 
+    FRONT_LEFT = MotorDriver(enable=13, dir=6)
+    FRONT_RIGHT = MotorDriver(enable=5, dir=12)
+    BACK = MotorDriver(enable=19, dir=26)
+
     config = {
-        # motor
-        'front_left': MotorDriver(enable=13, dir=6),
-        'front_right': MotorDriver(enable=5, dir=12),
-        'back': MotorDriver(enable=19, dir=26)
+        'FRONT_LEFT': FRONT_LEFT,
+        'FRONT_RIGHT': FRONT_RIGHT,
+        'BACK': BACK
     }
     
 
@@ -48,9 +51,9 @@ class DriveSystem(GPIO.GPIODevice):
         
         """
         # obviously, this is not correct
-        self.config['front_left'].drive(a)
-        self.config['front_right'].drive(b)
-        self.config['back'].drive(c)
+        self.FRONT_LEFT.drive(a)
+        self.FRONT_RIGHT.drive(b)
+        self.BACK.drive(c)
 
 if __name__ == "__main__":
     import signal

@@ -46,7 +46,7 @@ class DisplayPane(ipy.VBox):
             elif img_path is not None:
                 self.raw_frame = Frame(cv2.imread(img_path))
             else:
-                self.raw_frame = next(self.video_stream)
+                self.raw_frame = next(iter(self.video_stream))
         else:
             self.raw_frame = Frame(img)
 

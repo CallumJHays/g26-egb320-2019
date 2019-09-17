@@ -32,11 +32,19 @@ async def index(req):
     return await response.file(CLIENT_STATICS_DIR / 'index.html')
 
 
-class ControlServer():
+@app.get('/live_stream.mjpg')
+async def live_stream(req):
+    async def stream(res):
+
+    return response.stream(stream, content_type='Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
+
+
+class ControlServer(Sanic):
 
     def __init__(self, port, video_stream, vision_system, autobuild=True):
-        self.server = Sanic()
-        self.server.blueprint(app)
+        super().__init__()
+
+        self.blueprint(app)
         self.port = port
         self.video_stream = video_stream
         self.vision_system = vision_system
@@ -49,8 +57,19 @@ class ControlServer():
             os.chdir(prev_wd)
 
 
+with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
+    output = StreamingOutput()
+    camera.start_recording(output, format='mjpeg')
+    try:
+        address = ('', 8000)
+        server = StreamingServer(address, StreamingHandler)
+        server.serve_forever()
+    finally:
+        camera.stop_recording()
+
+
     def run_indefinitely(self):
-        self.server.run(host='0.0.0.0', port=self.port)
+        self.run(host='0.0.0.0', port=self.port)
 
 class StreamingOutput(object):
     def __init__(self):
@@ -71,18 +90,7 @@ class StreamingOutput(object):
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/':
-            self.send_response(301)
-            self.send_header('Location', '/index.html')
-            self.end_headers()
-        elif self.path == '/index.html':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
+        if self.path == '/stream.mjpg':
             self.send_response(200)
             self.send_header('Age', 0)
             self.send_header('Cache-Control', 'no-cache, private')
@@ -112,6 +120,8 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 if __name__ == "__main__":
+    import copy
+
     video_stream = VideoStream() # use any available live feed device such as a webcam
     
     objects_to_size_and_result_limit = {
@@ -128,4 +138,8 @@ if __name__ == "__main__":
             result_limit=result_limit
         ) for name, (size, result_limit) in objects_to_size_and_result_limit.items()
     })
-    ControlServer(8080, video_stream=video_stream, vision_system=vision_system)
+    ControlServer(
+        port=8080,
+        video_stream=copy.copy(video_stream), # send a shallow copy of the video stream so that when used as an iterator by the control server it uses 
+        vision_system=vision_system
+    ).run()

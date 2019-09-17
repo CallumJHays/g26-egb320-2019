@@ -48,13 +48,14 @@ class VisualObject():
             pixel_height = result.coords[1][1] - result.coords[0][1]
 
             # get the average width for now - avoid more difficult analysis unless necessary
+            # TODO: move this operation out of the loop so it isnt repeated needlessly
             avg_real_width = (self.real_size[0] + self.real_size[1]) / 2
 
             # get the most likely distance as the biggest one between the width and height,
             # so that if half of the mask is blocked - it has less of an effect
             distance = self.FOCAL_CONSTANT * max(
-                self.real_size[2] / pixel_height,
-                avg_real_width / pixel_width
+                self.real_size[2] / pixel_height if pixel_height > 0 else 0,
+                avg_real_width / pixel_width if pixel_width > 0 else 0
             )
 
             self.bearings_distances.append((bearing, distance))

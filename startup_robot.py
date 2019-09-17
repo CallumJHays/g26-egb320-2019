@@ -1,21 +1,16 @@
 from __future__ import print_function
 from pyngrok import ngrok
-
 from email.mime.text import MIMEText
 import os
 import pickle
 import base64
 import smtplib
 import ssl
-
 import signal
-
-import os
 import socket
 from urllib.request import urlopen, URLError
 from npm.bindings import npm_run
 from pathlib import Path
-
 
 from ControlServer import ControlServer
 from VisionSystem import VisionSystem, VisualObject, VideoStream
@@ -94,12 +89,6 @@ def main():
     video_stream = VideoStream()
     vision_system = setup_vision_system(video_stream.resolution)
 
-    print("Launching control server...")
-    try:
-        server = ControlServer(port=CONTROL_SERVER_PORT, video_stream=video_stream, vision_system=vision_system)
-    except Exception as e:
-        print("Control server failed to launch with exception", e)
-
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
 
@@ -115,8 +104,16 @@ def main():
 
     send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
     
-    print("Launching Control Server")
-    server.run_indefinitely()
+
+    print("Launching control server...")
+    try:
+        ControlServer(
+            port=CONTROL_SERVER_PORT,
+            video_stream=video_stream,
+            vision_system=vision_system
+        ).run()
+    except Exception as e:
+        print("Control server failed to launch with exception", e)
 
 
 def send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT):

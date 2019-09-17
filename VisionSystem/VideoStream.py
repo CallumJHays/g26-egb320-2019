@@ -1,5 +1,5 @@
 import cv2
-from threading import Thread, Lock
+from threading import Thread, Event
 import numpy as np
 from .DetectionModel import Frame
 from time import time
@@ -13,14 +13,41 @@ except Exception:
 PI_CAM_SENSOR_MODE = 5
 PI_CAM_RESOLUTION = (1640, 922)
 
+class FrameIterator():
+    
+    def __init__(self, video_stream):
+        self.stream = video_stream
+    
+    def __next__(self):
+        stream = self.stream
+        if stream.on_disk:
+            frame = stream.read_frame(stream.frame_idx)
+            stream.frame_idx += 1
+            return frame
+        else:
+            if not stream.started:
+                stream.start()
+            stream.new_frame_event.wait() # blocks until there is a new frame (when strea.new_frame.set() is called)
+            image = stream.image_buffer
+            if stream.pi_cam:
+                image = image.reshape(stream.resolution.transpose() + (3,))
+
+        if image.shape != stream.resolution + (3,):
+            image = cv2.resize(image, stream.resolution)
+
+        return Frame(image)
+
+
 # Asynchronous camera / video-stream class
 class VideoStream():
 
     def __init__(self, video_path=None, downsample_scale=1):
-        self.on_disk = False
-        self.piCam = None
-        if video_path:
+        self.pi_cam = None
+        self.on_disk = video_path is not None
+        
+        if self.on_disk:
             self.frame_idx = 0
+
             self.cap = cv2.VideoCapture(video_path)
             self.on_disk = True
             self.resolution = (
@@ -33,7 +60,7 @@ class VideoStream():
                     int(PI_CAM_RESOLUTION[0] / downsample_scale),
                     int(PI_CAM_RESOLUTION[1] / downsample_scale),
                 ).pad()
-                self.piCam = PiCamera(sensor_mode=PI_CAM_SENSOR_MODE, resolution=self.resolution)
+                self.pi_cam = PiCamera(sensor_mode=PI_CAM_SENSOR_MODE, resolution=self.resolution)
             else:
                 self.cap = cv2.VideoCapture(0)
                 self.resolution = (
@@ -43,66 +70,34 @@ class VideoStream():
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution[1])
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution[0])
                 
-            self.imageBuffer = None
-            self.new_frame_lock = Lock()
-            self.writing_frame_lock = Lock()
+            self.image_buffer = np.empty((self.resolution[0] * self.resolution[1] * 3,), dtype=np.uint8)
+            self.new_frame_event = Event()
             self.started = False
             self.stopped = False
 
 
-
     def __iter__(self):
-        return self
+        return FrameIterator(self)
 
 
-    def __next__(self):
-        if self.on_disk:
-            image = self.read_frame(self.frame_idx)
-            self.frame_idx += 1
-            return image
-        else:
-            if not self.started:
-                self.start()
-            self.new_frame_lock.acquire() # blocks until there is a new frame
-            image = self.imageBuffer
-            if self.piCam:
-                image = image.reshape(self.resolution.transpose() + (3,))
-
-        if image.shape != self.resolution + (3,):
-            image = cv2.resize(image, self.resolution)
-
-        return Frame(image)
-
-
-    def update(self):
-        image = None
+    def update_forever(self):
         while True:
-            if self.piCam:
-                self.imageBuffer = image
-                image = np.empty((self.resolution[0] * self.resolution[1] * 3,), dtype=np.uint8)
-                self.piCam.capture(image, 'bgr', use_video_port=True)
-                try: # hacks
-                    self.new_frame_lock.release()
-                except RuntimeError:
-                    pass
-
-                if self.stopped:
-                    return
+            self.new_frame_event.clear() # a new frame is on the way!
+            if self.pi_cam:
+                self.pi_cam.capture(self.image_buffer, 'bgr', use_video_port=True)
             else:
-                _, self.imageBuffer = self.cap.read()
-                try: #hacks
-                    self.new_frame_lock.release()
-                except RuntimeError:
-                    pass
+                _, self.image_buffer = self.cap.read()
                 
-                if self.stopped:
-                    return
+            self.new_frame_event.set() # let consumers know the new frame is ready
+
+            if self.stopped:
+                return
 
 
     def close(self):
         self.stopped = True
-        if self.piCam:
-            self.piCam.close()
+        if self.pi_cam:
+            self.pi_cam.close()
         else:
             self.cap.release()
             
@@ -120,6 +115,5 @@ class VideoStream():
 
     
     def start(self):
-        self.new_frame_lock.acquire()
-        Thread(target=self.update).start()
+        Thread(target=self.update_forever).start()
         self.started = True
