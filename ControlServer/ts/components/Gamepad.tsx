@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useState } from 'react';
 
 import Menu from './Menu';
+import LiveStream from './LiveStream';
 
 const App = styled.div`
   font-family: Impact, Charcoal, sans-serif;
@@ -15,6 +16,10 @@ const Container = styled.div`
   > * {
     flex-grow: 1;
   }
+`;
+
+const LeftSide = styled.div`
+  position: relative;
 `;
 
 const RightSide = styled.div`
@@ -134,11 +139,12 @@ export default ({
   <App>
     {isMenuOpen ? <Menu onClose={() => setMenuOpen(false)} /> : null}
     <Container>
-      <div>
+      <LeftSide>
         <Joystick height='100vh' bgText={`↑
         ← STRAFE →
         ↓`}/>
-      </div>
+        <LiveStream />
+      </LeftSide>
 
       <RightSide>
         <Joystick height='50vh' bgText="↶ ROTATE ↷" />

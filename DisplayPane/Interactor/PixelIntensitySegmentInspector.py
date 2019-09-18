@@ -13,6 +13,7 @@ class PixelIntensitySegmentInspector(Interactor):
 
     def __init__(self):
         self.segment_selector = SegmentSelector()
+        self.enabled = True
 
 
     def link_with(self, display_pane):
@@ -50,20 +51,27 @@ class PixelIntensitySegmentInspector(Interactor):
 
         self.pixel_intensities_fig = bq.Figure(marks=[self.pixel_intensities_mark], axes=axes)
         self.pixel_intensities_fig.layout.width = '100%'
-        self.pixel_intensities_fig.layout.height = str(self.display_pane.size * FULL_HEIGHT) + 'px'
+        self.pixel_intensities_fig.layout.height = str(self.display_pane.size * self.display_pane.available_space * FULL_HEIGHT) + 'px'
         self.pixel_intensities_fig.layout.margin = '0'
-        self.pixel_intensities_fig.title = 'Pixel Intensities Along Segment'
         
         self.update_pixel_intensities_mark()
 
+        minimizeable = ipy.Accordion(children=[self.pixel_intensities_fig])
+        minimizeable.set_title(0, 'Pixel Intensities Along Segment')
+
+        def on_change(change):
+            self.enabled = change['new'] == 0
+        
+        minimizeable.observe(on_change, 'selected_index')
+
         return ipy.VBox([
-            self.pixel_intensities_fig,
+            minimizeable,
             bq.toolbar.Toolbar(figure=self.pixel_intensities_fig)
         ])
 
 
     def update_pixel_intensities_mark(self):
-        if len(self.segment_selector.segment_mark.y) == 2:
+        if self.enabled and len(self.segment_selector.segment_mark.y) == 2:
 
             img = self.display_pane.filtered_frame.get(self.display_pane.display_colorspace)
             height, width, _ = img.shape

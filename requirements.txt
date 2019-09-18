@@ -1,5 +1,7 @@
 pyngrok==1.4.0
 sanic==19.6.3
+Sanic-Cors==0.9.9.post1
 librosa==0.7.0
 matplotlib==3.1.1
 gpiozero==1.5.1
+bqplot==0.11.6

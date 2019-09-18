@@ -1,4 +1,5 @@
 from sanic import Blueprint, Sanic, response
+from sanic_cors import CORS
 from pathlib import Path
 from threading import Thread
 import subprocess
@@ -12,7 +13,7 @@ from http import server
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from VisionSystem import VideoStream, VisionSystem, VisualObject
-from VisionSystem.DetectionModel import ThreshBlob
+from VisionSystem.DetectionModel import ThreshBlob, ColorSpaces
 
 SERVER_BASE_DIR = Path(__file__).parents[0]
 CLIENT_STATICS_DIR = SERVER_BASE_DIR / 'out'
@@ -32,11 +33,6 @@ async def index(req):
     return await response.file(CLIENT_STATICS_DIR / 'index.html')
 
 
-@app.get('/live_stream.mjpg')
-async def live_stream(req):
-    async def stream(res):
-
-    return response.stream(stream, content_type='Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
 
 
 class ControlServer(Sanic):
@@ -45,6 +41,8 @@ class ControlServer(Sanic):
         super().__init__()
 
         self.blueprint(app)
+        self.add_route(self.live_stream, '/live_stream.mjpg')
+        CORS(self)
         self.port = port
         self.video_stream = video_stream
         self.vision_system = vision_system
@@ -56,72 +54,34 @@ class ControlServer(Sanic):
             subprocess.call("npm run export".split(" "))
             os.chdir(prev_wd)
 
+    
+    async def live_stream(self, req):
+        async def stream(res):
+            raw_header = lambda name, val: f"{name}: {val}"
+            for frame in self.video_stream:
+                img = frame.get(ColorSpaces.BGR)
+                # await res.write(f"""\
+                # --FRAME\r\
+                # {raw_header('Content-Type', 'image/jpeg')}\r
+                # {raw_header('Content-Length', len(img))}\r
+                # """)
+                await res.write("Hello World")
+                # await res.write('\r\n')
 
-with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
-    output = StreamingOutput()
-    camera.start_recording(output, format='mjpeg')
-    try:
-        address = ('', 8000)
-        server = StreamingServer(address, StreamingHandler)
-        server.serve_forever()
-    finally:
-        camera.stop_recording()
-
-
+        return response.stream(
+            stream,
+            content_type='image/jpeg',
+            # headers={
+            #     'Age': 0,
+            #     'Cache-Control': 'no-cache, private',
+            #     'Pragma': 'no-cache'
+            # }
+        )
     def run_indefinitely(self):
         self.run(host='0.0.0.0', port=self.port)
 
-class StreamingOutput(object):
-    def __init__(self):
-        self.frame = None
-        self.buffer = io.BytesIO()
-        self.condition = Condition()
-
-    def write(self, buf):
-        if buf.startswith(b'\xff\xd8'):
-            # New frame, copy the existing buffer's content and notify all
-            # clients it's available
-            self.buffer.truncate()
-            with self.condition:
-                self.frame = self.buffer.getvalue()
-                self.condition.notify_all()
-            self.buffer.seek(0)
-        return self.buffer.write(buf)
-
-class StreamingHandler(server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/stream.mjpg':
-            self.send_response(200)
-            self.send_header('Age', 0)
-            self.send_header('Cache-Control', 'no-cache, private')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
-            self.end_headers()
-            try:
-                while True:
-                    frame = next(video_stream)
-                    self.wfile.write(b'--FRAME\r\n')
-                    self.send_header('Content-Type', 'image/jpeg')
-                    self.send_header('Content-Length', len(frame))
-                    self.end_headers()
-                    self.wfile.write(frame)
-                    self.wfile.write(b'\r\n')
-            except Exception as e:
-                logging.warning(
-                    'Removed streaming client %s: %s',
-                    self.client_address, str(e))
-        else:
-            self.send_error(404)
-            self.end_headers()
-
-class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
-    allow_reuse_address = True
-    daemon_threads = True
-
 
 if __name__ == "__main__":
-    import copy
-
     video_stream = VideoStream() # use any available live feed device such as a webcam
     
     objects_to_size_and_result_limit = {
@@ -140,6 +100,6 @@ if __name__ == "__main__":
     })
     ControlServer(
         port=8080,
-        video_stream=copy.copy(video_stream), # send a shallow copy of the video stream so that when used as an iterator by the control server it uses 
+        video_stream=video_stream, # send a shallow copy of the video stream so that when used as an iterator by the control server it uses 
         vision_system=vision_system
     ).run()

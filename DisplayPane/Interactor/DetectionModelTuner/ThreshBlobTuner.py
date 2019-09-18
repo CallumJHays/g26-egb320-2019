@@ -28,7 +28,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
 
         self.model_display = DisplayPane(
             frame=self.display_pane.raw_frame,
-            size=self.display_pane.size,
+            size=1,
+            available_space=self.display_pane.size,
             interactors=[colorspace_picker, segment_inspector],
             vision_system=VisionSystem(
                 objects_to_track={ 'obj': VisualObject(detection_model=self.detection_model) },

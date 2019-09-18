@@ -15,14 +15,16 @@ class DisplayPane(ipy.VBox):
     FULL_OFFSET = 240
 
     def __init__(self, video_stream=None, img_path=None, img=None, interactors=None, size=0.5, vision_system=None, frame=None, \
-            filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR, **kwargs):
+            filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR, \
+            available_space=1, **kwargs):
 
         if not (video_stream is not None) ^ (img is not None) ^ (frame is not None) ^ (img_path is not None):
             raise Exception("either path, img or frame must be defined, and not both")
         
         self.bq_img = None
         self.raw_frame = None
-        self.size = size or 1
+        self.size = size
+        self.available_space = available_space
         self.video_stream = video_stream
         self.togglebutton_group = []
         self.interactors = interactors or []
@@ -65,7 +67,8 @@ class DisplayPane(ipy.VBox):
             self.image_plot,
             self.make_image_tools(self.image_plot)
         ] + toolbar_controls)
-        display_pane.layout.width = str(self.size * self.FULL_EXTERNAL_WIDTH) + 'px'
+        
+        display_pane.layout.width = str(size * available_space * self.FULL_EXTERNAL_WIDTH) + 'px'
 
         # fill accross 1/size times before filling downwards
         hbox_list = [display_pane]
@@ -100,7 +103,7 @@ class DisplayPane(ipy.VBox):
         # TODO: is this broken?
         image_plot.layout.width = '100%'
         image_plot.layout.margin = '0'
-        image_plot.layout.height = str(self.size * self.FULL_INTERNAL_WIDTH * height / width + self.size * self.FULL_OFFSET) + 'px'
+        image_plot.layout.height = str((self.FULL_INTERNAL_WIDTH * height / width + self.FULL_OFFSET) * self.size * self.available_space) + 'px'
 
         return image_plot
     
