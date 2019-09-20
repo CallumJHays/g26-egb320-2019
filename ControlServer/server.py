@@ -9,6 +9,7 @@ import logging
 import socketserver
 from threading import Condition
 from http import server
+from sanic.websocket import WebSocketProtocol
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -42,6 +43,7 @@ class ControlServer(Sanic):
 
         self.blueprint(app)
         self.add_route(self.live_stream, '/live_stream.mjpg')
+        self.add_websocket_route(self.remote_control, '/remote_control')
         CORS(self)
         self.port = port
         self.video_stream = video_stream
@@ -70,15 +72,23 @@ class ControlServer(Sanic):
 
         return response.stream(
             stream,
-            content_type='image/jpeg',
             # headers={
             #     'Age': 0,
             #     'Cache-Control': 'no-cache, private',
             #     'Pragma': 'no-cache'
             # }
         )
-    def run_indefinitely(self):
-        self.run(host='0.0.0.0', port=self.port)
+    
+
+    async def remote_control(self, req, ws):
+        while True:
+            cmd_json = await ws.recv()
+            ws.send('got cmd', cmd_json)
+    
+
+    def run(self, *args, **kwargs):
+        super().run(*args, **kwargs, host='0.0.0.0', port=self.port, protocol=WebSocketProtocol)
+        
 
 
 if __name__ == "__main__":
