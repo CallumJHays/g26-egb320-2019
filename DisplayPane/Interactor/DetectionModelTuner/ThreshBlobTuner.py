@@ -49,7 +49,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                 description=thresh.colorspace.channel_labels[idx],
                 value=(thresh.lower[idx], thresh.upper[idx]),
                 min=minVal,
-                max=maxVal
+                max=maxVal,
+                continuous_update=False
             )
             slider.layout.width = '95%'
 
@@ -80,7 +81,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             description='Dilation 1',
             value=thresh.dilation1,
             min=0,
-            max=50
+            max=10,
+            continuous_update=False
         )
         dilation1_slider.layout.width = '95%'
 
@@ -88,7 +90,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             description='Erosion 1',
             value=thresh.erosion1,
             min=0,
-            max=50
+            max=10,
+            continuous_update=False
         )
         erosion1_slider.layout.width = '95%'
 
@@ -96,7 +99,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             description='Dilation 2',
             value=thresh.dilation2,
             min=0,
-            max=50
+            max=10,
+            continuous_update=False
         )
         dilation2_slider.layout.width = '95%'
 
@@ -104,7 +108,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             description='Erosion 2',
             value=thresh.erosion2,
             min=0,
-            max=50
+            max=10,
+            continuous_update=False
         )
         erosion2_slider.layout.width = '95%'
 
@@ -159,7 +164,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                 min=slider_range[0],
                 max=slider_range[1],
                 value=slider_value,
-                step=0.0001
+                step=0.0001,
+                continuous_update=False
             )
             slider.layout.width = '95%'
             slider.observe(on_change(param_name), 'value')

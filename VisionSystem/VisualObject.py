@@ -7,7 +7,7 @@ class VisualObject():
     # camera is 62.2 degrees wide
     CAMERA_FOV = math.radians(62.2)
     FORWARD_DIRECTION = 0
-    FOCAL_CONSTANT = 250
+    FOCAL_CONSTANT = 100
 
     
     def __init__(self, real_size=None,  detection_model=None, result_limit=None, camera_width=None):

@@ -29,8 +29,6 @@ class FrameIterator():
                 stream.start()
             stream.new_frame_event.wait() # blocks until there is a new frame (when strea.new_frame.set() is called)
             image = stream.image_buffer
-            if stream.pi_cam:
-                image = image.reshape(stream.resolution.transpose() + (3,))
 
         if image.shape != stream.resolution + (3,):
             image = cv2.resize(image, stream.resolution)
@@ -41,9 +39,10 @@ class FrameIterator():
 # Asynchronous camera / video-stream class
 class VideoStream():
 
-    def __init__(self, video_path=None, downsample_scale=1):
+    def __init__(self, video_path=None, downsample_scale=1, rotate_90_n=0):
         self.pi_cam = None
         self.on_disk = video_path is not None
+        self.rotate_90_n = rotate_90_n
         
         if self.on_disk:
             self.frame_idx = 0
@@ -60,6 +59,7 @@ class VideoStream():
                     int(PI_CAM_RESOLUTION[0] / downsample_scale),
                     int(PI_CAM_RESOLUTION[1] / downsample_scale),
                 ).pad()
+                print('self.resolution', self.resolution)
                 self.pi_cam = PiCamera(sensor_mode=PI_CAM_SENSOR_MODE, resolution=self.resolution)
             else:
                 self.cap = cv2.VideoCapture(0)
@@ -72,6 +72,7 @@ class VideoStream():
                 
             self.image_buffer = np.empty((self.resolution[0] * self.resolution[1] * 3,), dtype=np.uint8)
             self.new_frame_event = Event()
+            self.new_frame_event.clear()
             self.started = False
             self.stopped = False
 
@@ -84,10 +85,15 @@ class VideoStream():
         while True:
             self.new_frame_event.clear() # a new frame is on the way!
             if self.pi_cam:
-                self.pi_cam.capture(self.image_buffer, 'bgr', use_video_port=True)
+                image = np.empty((self.resolution[0] * self.resolution[1] * 3,), dtype=np.uint8)
+                self.pi_cam.capture(image, 'bgr', use_video_port=True)
+                self.image_buffer = image.reshape(self.resolution.transpose() + (3,))
             else:
                 _, self.image_buffer = self.cap.read()
-                
+            
+            if self.rotate_90_n > 0:
+                self.image_buffer = np.rot90(self.image_buffer, k=self.rotate_90_n)
+            
             self.new_frame_event.set() # let consumers know the new frame is ready
 
             if self.stopped:

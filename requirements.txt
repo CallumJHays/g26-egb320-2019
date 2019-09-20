@@ -5,3 +5,4 @@ librosa==0.7.0
 matplotlib==3.1.1
 gpiozero==1.5.1
 bqplot==0.11.6
+picamera==1.13

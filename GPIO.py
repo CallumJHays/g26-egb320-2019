@@ -23,7 +23,7 @@ def dynamic_config(func):
 
         # copy the list so that we don't use the same reference
         before = config.copy()
-        func(self, *args, **kwargs)asdasdasd
+        func(self, *args, **kwargs)
 
         print('before', before)
         print('after', config)

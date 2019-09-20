@@ -17,6 +17,7 @@ from VisionSystem import VisionSystem, VisualObject, VideoStream
 from VisionSystem.DetectionModel import ThreshBlob
 
 
+
 # helper
 def relpath(*paths):
     return os.path.join(os.path.dirname(__file__), *paths)
@@ -86,8 +87,8 @@ def setup_vision_system(resolution):
 def main():
     CONTROL_SERVER_PORT = 3000
 
-    video_stream = VideoStream()
-    vision_system = setup_vision_system(video_stream.resolution)
+#     video_stream = VideoStream()
+#     vision_system = setup_vision_system(video_stream.resolution)
 
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
@@ -105,15 +106,15 @@ def main():
     send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
     
 
-    print("Launching control server...")
-    try:
-        ControlServer(
-            port=CONTROL_SERVER_PORT,
-            video_stream=video_stream,
-            vision_system=vision_system
-        ).run()
-    except Exception as e:
-        print("Control server failed to launch with exception", e)
+#     print("Launching control server...")
+#     try:
+#         ControlServer(
+#             port=CONTROL_SERVER_PORT,
+#             video_stream=video_stream,
+#             vision_system=vision_system
+#         ).run()
+#     except Exception as e:
+#         print("Control server failed to launch with exception", e)
 
 
 def send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT):
