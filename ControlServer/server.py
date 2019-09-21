@@ -14,6 +14,8 @@ from sanic.websocket import WebSocketProtocol
 import json
 from inspect import cleandoc
 import cv2
+import asyncio
+from ffmpy3 import FFmpeg
 
 
 SERVER_BASE_DIR = Path(__file__).parents[0]
@@ -44,7 +46,7 @@ class ControlServer(Sanic):
 
         self.blueprint(app)
         self.add_route(self.live_stream_mjpg, '/live_stream.mjpg')
-        self.add_websocket_route(self.live_stream, '/live_stream')
+        self.add_websocket_route(self.live_stream_ws_x264, '/live_stream')
         self.add_websocket_route(self.remote_control, '/remote_control')
         CORS(self)
         self.port = port
@@ -62,14 +64,63 @@ class ControlServer(Sanic):
                 f"cp {SERVER_STATICS_DIR}/* {CLIENT_STATICS_DIR}/*".split(" "))
             os.chdir(prev_wd)
 
-    async def live_stream(self, req):
-        async def stream(res):
-            NAL_SEPERATOR = b'\x00\x00\x00\x01'
-            for frame in self.video_stream:
-                bgr = frame.get(ColorSpaces.BGR)
-                jpeg = cv2.imencode('.jpg', bgr)[1].tostring()
-                # TODO: encode as h264 frame
-                await res.write()
+    async def live_stream_ws_x264(self, req, ws):
+        # implements a x264 livestream that works with the WSAvcPlayer used by the LiveStream component
+        # I assume this is the thing in a x264 livestream that specifies the beginning of a new frame
+        NAL_SEPERATOR = b'\x00\x00\x00\x01'
+        NAL_SEP_LEN = len(NAL_SEPERATOR)
+
+        vid_width, vid_height = self.video_stream.resolution
+
+        transcoder_process = await FFmpeg(
+            executable="docker run jrottenberg/ffmpeg",
+            inputs={
+                'pipe:0': f'-f mjpeg'},
+            outputs={
+                'pipe:1': f'-c:v h264 -f h264 -s:v {vid_width}x{vid_height}'}
+        ).run_async(stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE)
+
+        # iterate until the client disconnects and teardown occurs
+        for frame in self.video_stream:
+            bgr = frame.get(ColorSpaces.BGR)
+            jpeg = cv2.imencode('.jpg', bgr)[1].tostring()
+
+            # an mjpg stream is literally just raw jpeg data one after the other - nice and easy!
+            # write to the stream which will trigger ffmpeg in the other process to start transcoding to a h264 frame
+            resp, err = await transcoder_process.communicate(jpeg)
+            assert not err and not resp
+
+            # buffer the output until the frame separator is encountered
+            buffer = io.BytesIO()
+            byte_ranges_scanned = 0
+
+            def buffer_NAL_SEPARATOR_idx():
+                global byte_ranges_scanned
+                buf_len = buffer.getbuffer().nbytes
+
+                while buf_len > 4 and buf_len > (byte_ranges_scanned + NAL_SEP_LEN):
+                    buffer.seek(byte_ranges_scanned)
+                    curr_range = buffer.read(NAL_SEP_LEN)
+                    byte_ranges_scanned += 1
+                    if curr_range == NAL_SEPERATOR:
+                        buffer.seek(buf_len)
+                        return byte_ranges_scanned - 1
+                buffer.seek(buf_len)
+                return -1
+
+            # imitate the nodejs codes' stream.split(NAL_SEPERATOR) function
+            while buffer_NAL_SEPARATOR_idx() == -1:
+                reply, err = await transcoder_process.communicate()
+                # print('got reply', reply, 'got err', err)
+                if reply:
+                    print(reply)
+                buffer.write(reply)
+
+            # the buffer now contains the full x264 frame, as well as some (erroneous?) extra data
+            buffer.seek(0)
+            x264_frame = buffer.read(buffer_NAL_SEPARATOR_idx() + 1)
+            buffer.seek(NAL_SEP_LEN, 1)
+            await ws.send(x264_frame)
 
     async def live_stream_mjpg(self, req):
         async def stream(res):
