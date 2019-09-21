@@ -17,7 +17,6 @@ from VisionSystem import VisionSystem, VisualObject, VideoStream
 from VisionSystem.DetectionModel import ThreshBlob
 
 
-
 # helper
 def relpath(*paths):
     return os.path.join(os.path.dirname(__file__), *paths)
@@ -63,32 +62,32 @@ def format_email(fr, to, subject, body):
     return message.as_string()
 
 
-
-
 # load detection models and setup vision system with all objects' sizes for distance
 # detection
 def setup_vision_system(resolution):
     objects_to_size_and_result_limit = [
         ("ball", (0.043, 0.043, 0.043), 1),
         ("obstacle", (0.18, 0.18, 0.2), None),
-        ("blue_goal", (0.3, 0.3, 0.1), 1), # 30 centimetres long, 10 cm high? i guess
+        # 30 centimetres long, 10 cm high? i guess
+        ("blue_goal", (0.3, 0.3, 0.1), 1),
         ("yellow_goal", (0.3, 0.3, 0.1), 1)
     ]
 
-    return VisionSystem(camera_pixel_width=resolution[0], objects_to_track={
-        name: VisualObject(
-            real_size=size,
-            detection_model=ThreshBlob.load(relpath("models", f"{name}.threshblob.pkl")),
-            result_limit=result_limit
-        ) for name, size, result_limit in objects_to_size_and_result_limit
-    })
+    return VisionSystem(
+        camera_pixel_width=resolution[0],
+        objects_to_track={
+            name: VisualObject(
+                real_size=size,
+                detection_model=ThreshBlob.load(
+                    relpath("models", f"{name}.threshblob.pkl")),
+                result_limit=result_limit
+            ) for name, size, result_limit in objects_to_size_and_result_limit
+        }
+    )
 
 
 def main():
     CONTROL_SERVER_PORT = 3000
-
-#     video_stream = VideoStream()
-#     vision_system = setup_vision_system(video_stream.resolution)
 
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
@@ -96,7 +95,7 @@ def main():
     print("Setting up an ngrok tunnel to the control server")
     # public_ssh_url = ngrok.connect(22, 'tcp')
     control_server_url = ngrok.connect(CONTROL_SERVER_PORT, 'http')
-    
+
     # print("ngrok public ssh url:", public_ssh_url)
     print("ngrok public control-server url:", control_server_url)
 
@@ -104,17 +103,31 @@ def main():
     print("local ip:", lan_ip)
 
     send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
-    
 
-#     print("Launching control server...")
-#     try:
-#         ControlServer(
-#             port=CONTROL_SERVER_PORT,
-#             video_stream=video_stream,
-#             vision_system=vision_system
-#         ).run()
-#     except Exception as e:
-#         print("Control server failed to launch with exception", e)
+    print("Launching control server...")
+    try:
+        video_stream = VideoStream()
+        vision_system = setup_vision_system(video_stream.resolution)
+
+        try:
+            from DriveSystem import DriveSystem
+            drive_system = DriveSystem()
+        except ModuleNotFoundError:
+            # not on the raspberry pi, just mock it
+            def drive_system():
+                pass
+
+            drive_system.set_desired_motion = lambda x, y, omega: print(
+                'mock drive system driving', x, y, omega)
+
+        ControlServer(
+            port=CONTROL_SERVER_PORT,
+            video_stream=video_stream,
+            vision_system=vision_system,
+            drive_system=drive_system
+        ).run()
+    except Exception as e:
+        print("Control server failed to launch with exception", e)
 
 
 def send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT):
@@ -140,7 +153,6 @@ def send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT):
             format_email(EMAIL, EMAIL, subject, email_body)
         )
     print("Sent detail update to", EMAIL)
-
 
 
 if __name__ == '__main__':

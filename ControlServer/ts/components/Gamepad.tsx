@@ -1,9 +1,11 @@
 import ReactJoystick from "react-joystick";
 import styled from "styled-components";
-import { useState } from 'react';
+import { useState } from "react";
 
-import Menu from './Menu';
-import LiveStream from './LiveStream';
+import Menu from "./Menu";
+import LiveStream from "./LiveStream";
+
+import { useAPI } from "../api";
 
 const App = styled.div`
   font-family: Impact, Charcoal, sans-serif;
@@ -55,9 +57,8 @@ const ButtonContainer = styled.div`
     cursor: pointer;
     flex-grow: 1;
     color: white;
-    
 
-    border: ${pressed => pressed ? '5px solid #EEEEEE' : '3px solid #424242' };
+    border: ${pressed => (pressed ? "5px solid #EEEEEE" : "3px solid #424242")};
   }
 `;
 
@@ -91,22 +92,22 @@ const ToggleDribbleButton = styled.button`
     border-color: #0d47a1;
   }
 
-  ${({on}) => on ? '' : 'filter: grayscale(100%)'}
+  ${({ on }) => (on ? "" : "filter: grayscale(100%)")}
 `;
 
 const MenuButton = styled.button`
-  background-image: linear-gradient(to bottom left, #4CAF50, #1B5E20);
+  background-image: linear-gradient(to bottom left, #4caf50, #1b5e20);
   font-size: 7vh;
 
   :hover {
-    background-image: linear-gradient(to bottom left, #1B5E20, #4CAF50);
+    background-image: linear-gradient(to bottom left, #1b5e20, #4caf50);
   }
   :active {
-    border-color: #388E3C;
+    border-color: #388e3c;
   }
 `;
 
-const Joystick = ({ height: height = 'auto', bgText }) =>
+const Joystick = ({ height: height = "auto", bgText, onMove, onEnd }) => (
   <JoystickContainer>
     <span>{bgText}</span>
     <ReactJoystick
@@ -121,52 +122,93 @@ const Joystick = ({ height: height = 'auto', bgText }) =>
         margin: 0,
         background: "radial-gradient(#212121, #212121, #424242)",
         height,
-        width: '50vw',
-        justifyContent: 'center',
-        alignItems: 'center'
+        width: "50vw",
+        justifyContent: "center",
+        alignItems: "center"
       }}
       managerListener={nipple => {
-        nipple.on("move", (_e, _stick) => console.log("I moved!"));
-        nipple.on("end", () => console.log("I finished moving!"));
+        nipple.on("move", onMove);
+        nipple.on("end", onEnd);
       }}
     />
   </JoystickContainer>
+);
 
 export default ({
   _dribbleState: [isDribbling, setDribbling] = useState(false),
-  _menuState: [isMenuOpen, setMenuOpen] = useState(false)
-}) => (
-  <App>
-    {isMenuOpen ? <Menu onClose={() => setMenuOpen(false)} /> : null}
-    <Container>
-      <LeftSide>
-        <Joystick height='100vh' bgText={`↑
-        ← STRAFE →
-        ↓`}/>
-        <LiveStream />
-      </LeftSide>
+  _menuState: [isMenuOpen, setMenuOpen] = useState(false),
+  _motionState: [{ x, y, omega }, _setDesiredMotion] = useState({
+    x: 0,
+    y: 0,
+    omega: 0
+  }),
+  api = useAPI(),
+  setDesiredMotion = (x, y, omega) => {
+    api.setDesiredMotion(x, y, omega); // update server state via websocket
+    _setDesiredMotion({ x, y, omega }); // update client state via react hook
+  }
+}) =>
+  api ? (
+    <App>
+      {isMenuOpen ? (
+        <Menu onClose={() => setMenuOpen(false)} api={api} />
+      ) : null}
+      <Container>
+        <LeftSide>
+          <Joystick
+            height="100vh"
+            bgText={`↑
+          ← STRAFE →
+          ↓`}
+            onMove={(_, stick) => {
+              const MAX_STICK_DIST = 50;
+              const angle = stick.angle.radian;
+              const unitMagnitude = stick.distance / MAX_STICK_DIST;
+              const x = unitMagnitude * Math.cos(angle);
+              const y = unitMagnitude * Math.sin(angle);
+              setDesiredMotion(x, y, omega);
+            }}
+            onEnd={() => setDesiredMotion(0, 0, omega)}
+          />
+          <LiveStream />
+        </LeftSide>
 
-      <RightSide>
-        <Joystick height='50vh' bgText="↶ ROTATE ↷" />
+        <RightSide>
+          <Joystick
+            height="50vh"
+            bgText="↶ ROTATE ↷"
+            onMove={(_, stick) => {
+              const MAX_STICK_DIST = 50;
+              const angle = stick.angle.radian;
+              const unitMagnitude = stick.distance / MAX_STICK_DIST;
+              const omega = unitMagnitude * Math.cos(angle);
+              setDesiredMotion(x, y, omega);
+            }}
+            onEnd={() => setDesiredMotion(x, y, 0)}
+          />
 
-        <ButtonContainer>
-          <ConfigButtons>
-            <ToggleDribbleButton
-              onClick={() => setDribbling(!isDribbling)}
-              className={isDribbling ? 'on' : null}
-              on={isDribbling}
-            >
-              TOGGLE<br/>DRIBBLE:<br/>{isDribbling ? "ON" : "OFF"}
-            </ToggleDribbleButton>
-            <MenuButton onClick={() => setMenuOpen(true)}>
-              MENU
-            </MenuButton>
-          </ConfigButtons>
-          <KickButton>
-            <b>KICK</b>
-          </KickButton>
-        </ButtonContainer>
-      </RightSide>
-    </Container>
-  </App>
-);
+          <ButtonContainer>
+            <ConfigButtons>
+              <ToggleDribbleButton
+                onClick={() => setDribbling(!isDribbling)}
+                className={isDribbling ? "on" : null}
+                on={isDribbling}
+              >
+                TOGGLE
+                <br />
+                DRIBBLE:
+                <br />
+                {isDribbling ? "ON" : "OFF"}
+              </ToggleDribbleButton>
+              <MenuButton onClick={() => setMenuOpen(true)}>MENU</MenuButton>
+            </ConfigButtons>
+            <KickButton>
+              <b>KICK</b>
+            </KickButton>
+          </ButtonContainer>
+        </RightSide>
+      </Container>
+    </App>
+  ) : (
+    <p>Creating a live connection to the robot...</p>
+  );
