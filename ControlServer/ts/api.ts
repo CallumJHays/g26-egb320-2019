@@ -10,17 +10,20 @@ export class API {
   async setDesiredMotion(x, y, omega) {
     this.ws.send(JSON.stringify({ x, y, omega }));
   }
+
+  getLivestreamUrl = () => _wsUrl("live_stream");
 }
 
 export const useAPI = ([api, setApi] = useState(null)) =>
   api
     ? api
     : (() => {
-        const url = new URL(
-          "ws://localhost:8080/remote_control",
-          window.location.href
-        );
-        url.protocol = url.protocol.replace("http", "ws");
-        const ws = new WebSocket(url.href);
+        const ws = new WebSocket(_wsUrl("remote_control"));
         ws.onopen = _event => setApi(new API(ws));
       })();
+
+const _wsUrl = uri => {
+  const url = new URL(`ws://localhost:8080/${uri}`, window.location.href);
+  url.protocol = url.protocol.replace("http", "ws");
+  return url.href;
+};

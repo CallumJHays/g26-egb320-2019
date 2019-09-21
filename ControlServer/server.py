@@ -43,7 +43,8 @@ class ControlServer(Sanic):
         super().__init__()
 
         self.blueprint(app)
-        self.add_route(self.live_stream, '/live_stream.mjpg')
+        self.add_route(self.live_stream_mjpg, '/live_stream.mjpg')
+        self.add_websocket_route(self.live_stream, '/live_stream')
         self.add_websocket_route(self.remote_control, '/remote_control')
         CORS(self)
         self.port = port
@@ -62,6 +63,15 @@ class ControlServer(Sanic):
             os.chdir(prev_wd)
 
     async def live_stream(self, req):
+        async def stream(res):
+            NAL_SEPERATOR = b'\x00\x00\x00\x01'
+            for frame in self.video_stream:
+                bgr = frame.get(ColorSpaces.BGR)
+                jpeg = cv2.imencode('.jpg', bgr)[1].tostring()
+                # TODO: encode as h264 frame
+                await res.write()
+
+    async def live_stream_mjpg(self, req):
         async def stream(res):
             for frame in self.video_stream:
                 bgr = frame.get(ColorSpaces.BGR)
@@ -132,7 +142,7 @@ if __name__ == "__main__":
             pass
 
         drive_system.set_desired_motion = lambda x, y, omega: print(
-            'mock drive system driving', x, y, omega)
+            'mock drive', x, y, omega)
 
     ControlServer(
         port=8080,

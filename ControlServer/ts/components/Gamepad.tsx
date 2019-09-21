@@ -170,7 +170,7 @@ export default ({
             }}
             onEnd={() => setDesiredMotion(0, 0, omega)}
           />
-          <LiveStream />
+          <LiveStream api={api} />
         </LeftSide>
 
         <RightSide>

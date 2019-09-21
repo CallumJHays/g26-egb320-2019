@@ -19,7 +19,8 @@
     "react-joystick": "^1.0.3",
     "rodal": "^1.6.3",
     "styled-components": "^4.3.2",
-    "styled-jsx": "^3.2.2"
+    "styled-jsx": "^3.2.2",
+    "ws-avc-player": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^12.7.4",
