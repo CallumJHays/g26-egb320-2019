@@ -11,10 +11,10 @@ export class API {
     this.ws.send(JSON.stringify({ x, y, omega }));
   }
 
-  getLivestreamUrl = () => _wsUrl("live_stream");
+  getLiveStreamUrl = () => _wsUrl("live_stream");
 }
 
-export const useAPI = ([api, setApi] = useState(null)) =>
+export const useApi = ([api, setApi] = useState(null)) =>
   api
     ? api
     : (() => {
@@ -23,7 +23,7 @@ export const useAPI = ([api, setApi] = useState(null)) =>
       })();
 
 const _wsUrl = uri => {
-  const url = new URL(`/${uri}`, window.location.href);
+  const url = new URL(`ws://localhost:8000/${uri}`, window.location.href);
   url.protocol = url.protocol.replace("http", "ws");
   return url.href;
 };

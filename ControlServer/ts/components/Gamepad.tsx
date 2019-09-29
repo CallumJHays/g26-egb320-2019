@@ -5,7 +5,7 @@ import { useState } from "react";
 import Menu from "./Menu";
 import LiveStream from "./LiveStream";
 
-import { useAPI } from "../api";
+import { useApi } from "../api";
 
 const App = styled.div`
   font-family: Impact, Charcoal, sans-serif;
@@ -142,7 +142,7 @@ export default ({
     y: 0,
     omega: 0
   }),
-  api = useAPI(),
+  api = useApi(),
   setDesiredMotion = (x, y, omega) => {
     api.setDesiredMotion(x, y, omega); // update server state via websocket
     _setDesiredMotion({ x, y, omega }); // update client state via react hook

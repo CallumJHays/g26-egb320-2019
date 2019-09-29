@@ -45,7 +45,7 @@ async def index(req):
 
 class ControlServer(Sanic):
 
-    def __init__(self, port, video_stream, vision_system, drive_system, autobuild=True):
+    def __init__(self, port, video_stream, vision_system, drive_system, autobuild=False):
         super().__init__()
 
         self.blueprint(app)
@@ -115,13 +115,12 @@ class ControlServer(Sanic):
                 inputs={
                     jpeg_input_fifo_path: '-f image2pipe -vcodec mjpeg'},
                 outputs={
-                    h264_output_fifo_path: f'-c:v h264 -f h264 -s:v {vid_width}x{vid_height} -movflags +faststart -profile:v baseline -level 3.0'}
+                    h264_output_fifo_path: f'-c:v h264 -f h264 -s:v {vid_width}x{vid_height} -movflags +faststart -profile:v baseline -level 3.0 -r 10 -vprofile baseline -b:v 500k -bufsize 600k -tune zerolatency -pix_fmt yuv420p'}
             ).run_async()
 
             buffer = b''
 
             for frame in self.video_stream:
-                await asyncio.sleep(0)
                 bgr = frame.get(ColorSpaces.BGR)
                 jpeg = cv2.imencode('.jpg', bgr)[1].tobytes()
 
@@ -134,6 +133,8 @@ class ControlServer(Sanic):
                         if len(buffer) > len(NALSeparator) and NALSeparator in buffer[-4:]:
                             await ws.send(buffer[:-4])
                             buffer = buffer[-4:]
+
+                await asyncio.sleep(0)
 
     async def live_stream_mjpg(self, req):
         async def stream(res):
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     from VisionSystem import VideoStream, VisionSystem, VisualObject
 
     # use any available live feed device such as a webcam
-    video_stream = VideoStream(downsample_scale=2)
+    video_stream = VideoStream(downsample_scale=8)
 
     objects_to_size_and_result_limit = {
         "ball": ((0.043, 0.043, 0.043), 1),

@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import { useEffect, createRef, useState } from "react";
+import { useEffect, createRef } from "react";
+import { useApi } from "../api";
 import WSAvcPlayer from "ws-avc-player";
 
 const LiveStreamContainer = styled.div`
@@ -7,14 +8,14 @@ const LiveStreamContainer = styled.div`
   top: 0;
   right: 0;
   width: 25vw;
+  height: 30vh
   v-index: 10;
 `;
 
 const linkPlayer = (api, nodeRef = createRef()) => {
   useEffect(() => {
-    console.log("connecting with noderef", nodeRef.current);
     const player = new WSAvcPlayer(nodeRef.current, "webgl", 1, 35);
-    player.connect(api.getLivestreamUrl());
+    player.connect(api.getLiveStreamUrl());
     player.on("disconnected", () => console.log("WS Disconnected"));
     player.on("connected", () => console.log("WS connected"));
 
@@ -30,8 +31,13 @@ const linkPlayer = (api, nodeRef = createRef()) => {
   return nodeRef;
 };
 
-export default ({ api, playerNodeRef = linkPlayer(api) as any }) => (
+const LiveStream = ({ api, playerNodeRef = linkPlayer(api) as any }) => (
   <LiveStreamContainer>
     <canvas ref={playerNodeRef} style={{ width: "100%", height: "100%" }} />
   </LiveStreamContainer>
 );
+
+export const ManagedStream = ({ api = useApi() }) =>
+  api ? <LiveStream api={api} /> : null;
+
+export default LiveStream;
