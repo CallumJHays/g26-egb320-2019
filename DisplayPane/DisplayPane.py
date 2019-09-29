@@ -7,20 +7,20 @@ from threading import Thread
 from VisionSystem.DetectionModel import Frame, ColorSpaces
 
 
-
 class DisplayPane(ipy.VBox):
 
     FULL_EXTERNAL_WIDTH = 983
     FULL_INTERNAL_WIDTH = 745
     FULL_OFFSET = 240
 
-    def __init__(self, video_stream=None, img_path=None, img=None, interactors=None, size=0.5, vision_system=None, frame=None, \
-            filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR, \
-            available_space=1, **kwargs):
+    def __init__(self, video_stream=None, img_path=None, img=None, interactors=None, size=0.5, vision_system=None, frame=None,
+                 filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR,
+                 available_space=1, apply_mask=False, **kwargs):
 
         if not (video_stream is not None) ^ (img is not None) ^ (frame is not None) ^ (img_path is not None):
-            raise Exception("either path, img or frame must be defined, and not both")
-        
+            raise Exception(
+                "either path, img or frame must be defined, and not both")
+
         self.bq_img = None
         self.raw_frame = None
         self.size = size
@@ -34,9 +34,10 @@ class DisplayPane(ipy.VBox):
         self.image_plot_scales = {'x': bq.LinearScale(), 'y': bq.LinearScale()}
         self.hidden = False
         self.display_colorspace = display_colorspace
+        self.apply_mask = apply_mask
 
         self.update_frame_cbs = update_frame_cbs or []
-        
+
         # read the data from a file to display
         if img is None:
             if frame is not None and type(frame is Frame):
@@ -59,16 +60,20 @@ class DisplayPane(ipy.VBox):
 
         self.image_plot = self.make_image_plot()
 
-        interactors_with_controls = [interactor for interactor in self.interactors if interactor.ipy_controls is not None]
-        panel_controls = [interactor.ipy_controls for interactor in interactors_with_controls if interactor.is_panel]
-        toolbar_controls = [interactor.ipy_controls for interactor in interactors_with_controls if not interactor.is_panel]
-        
+        interactors_with_controls = [
+            interactor for interactor in self.interactors if interactor.ipy_controls is not None]
+        panel_controls = [
+            interactor.ipy_controls for interactor in interactors_with_controls if interactor.is_panel]
+        toolbar_controls = [
+            interactor.ipy_controls for interactor in interactors_with_controls if not interactor.is_panel]
+
         display_pane = ipy.VBox([
             self.image_plot,
             self.make_image_tools(self.image_plot)
         ] + toolbar_controls)
-        
-        display_pane.layout.width = str(size * available_space * self.FULL_EXTERNAL_WIDTH) + 'px'
+
+        display_pane.layout.width = str(
+            size * available_space * self.FULL_EXTERNAL_WIDTH) + 'px'
 
         # fill accross 1/size times before filling downwards
         hbox_list = [display_pane]
@@ -80,12 +85,11 @@ class DisplayPane(ipy.VBox):
             if len(hbox_list) == int(1 / size):
                 vbox_list.append(ipy.HBox(hbox_list))
                 hbox_list = []
-        
+
         # add the remainder
         vbox_list += hbox_list
-        
+
         super().__init__(vbox_list, **kwargs)
-        
 
     def make_image_plot(self):
 
@@ -97,23 +101,23 @@ class DisplayPane(ipy.VBox):
             marks=marks,
             padding_y=0
         )
-        
+
         height, width, _ = self.raw_frame.get(ColorSpaces.BGR).shape
         # make sure the image is displayed with the correct aspect ratio
         # TODO: is this broken?
         image_plot.layout.width = '100%'
         image_plot.layout.margin = '0'
-        image_plot.layout.height = str((self.FULL_INTERNAL_WIDTH * height / width + self.FULL_OFFSET) * self.size * self.available_space) + 'px'
+        image_plot.layout.height = str(
+            (self.FULL_INTERNAL_WIDTH * height / width + self.FULL_OFFSET) * self.size * self.available_space) + 'px'
 
         return image_plot
-    
 
     def make_image_tools(self, image_plot):
-        widget_list = [   
+        widget_list = [
             self.make_toggle_panzoom_button(image_plot),
             self.make_reset_zoom_button()
         ]
-        
+
         if self.video_stream is not None:
             if self.video_stream.on_disk:
                 widget_list.append(self.make_video_controller())
@@ -123,16 +127,15 @@ class DisplayPane(ipy.VBox):
 
         return ipy.HBox(widget_list)
 
-    
     def pipe_livestream(self):
         for frame in self.video_stream:
             self.raw_frame = frame
             self.update_data_and_display()
-        
 
     def make_toggle_panzoom_button(self, image_plot):
         self.image_plot_panzoom = bq.interacts.PanZoom(
-            scales={'x': [self.image_plot_scales['x']], 'y': [self.image_plot_scales['y']]},
+            scales={'x': [self.image_plot_scales['x']],
+                    'y': [self.image_plot_scales['y']]},
         )
 
         button = ipy.ToggleButton(
@@ -152,7 +155,6 @@ class DisplayPane(ipy.VBox):
         self.add_to_togglebutton_group(button)
 
         return button
-        
 
     def make_reset_zoom_button(self):
         button = ipy.Button(
@@ -171,7 +173,6 @@ class DisplayPane(ipy.VBox):
         button.on_click(on_click)
 
         return button
-    
 
     def make_video_controller(self):
         last_frame = self.video_stream.cap.get(cv2.CAP_PROP_FRAME_COUNT) - 1
@@ -180,7 +181,7 @@ class DisplayPane(ipy.VBox):
             interval=1000 / self.video_stream.cap.get(cv2.CAP_PROP_FPS),
             max=last_frame
         )
-        
+
         slider = ipy.IntSlider(max=last_frame)
         ipy.link((player, 'value'), (slider, 'value'))
 
@@ -215,35 +216,39 @@ class DisplayPane(ipy.VBox):
         next_frame_button.layout.width = '60px'
         next_frame_button.on_click(change_slider(+1))
 
-        controller = ipy.HBox([prev_frame_button, player, next_frame_button, slider])
+        controller = ipy.HBox(
+            [prev_frame_button, player, next_frame_button, slider])
         return controller
-
 
     def update_data_and_display(self):
         if not self.hidden:
             # filter the image if need be
             self.filtered_frame.copy(self.raw_frame, ColorSpaces.BGR)
             if self.filter_fn is not None:
-                self.filtered_frame.link(self.filter_fn(self.filtered_frame), ColorSpaces.BGR)
-            
+                self.filtered_frame.link(self.filter_fn(
+                    self.filtered_frame), ColorSpaces.BGR)
+
             self.labelled_frame.copy(self.filtered_frame, ColorSpaces.BGR)
             if self.vision_system is not None:
-                self.vision_system.update_with_and_label_frame(self.labelled_frame)
+                self.vision_system.update_with_and_label_frame(
+                    self.labelled_frame)
 
             for cb in self.update_frame_cbs:
                 cb()
-            
+
             bgr_img = self.labelled_frame.get(self.display_colorspace)
             # apply the mask here for view purposes
-            if self.labelled_frame.mask is not None:
-                bgr_img = cv2.bitwise_and(bgr_img, bgr_img, mask=self.labelled_frame.mask)
-            ipy_img = ipy.Image(value=cv2.imencode('.jpg', bgr_img)[1].tostring(), format='jpg')
-            
+            if self.apply_mask and self.labelled_frame.mask is not None:
+                bgr_img = cv2.bitwise_and(
+                    bgr_img, bgr_img, mask=self.labelled_frame.mask)
+            ipy_img = ipy.Image(value=cv2.imencode('.jpg', bgr_img)[
+                                1].tostring(), format='jpg')
+
             if self.bq_img is None:
-                self.bq_img = bq.Image(image=ipy_img, scales=self.image_plot_scales)
+                self.bq_img = bq.Image(
+                    image=ipy_img, scales=self.image_plot_scales)
             else:
                 self.bq_img.image = ipy_img
-
 
     def link_frame(self, master_pane):
         def on_update_frame():
@@ -252,36 +257,30 @@ class DisplayPane(ipy.VBox):
 
         master_pane.update_frame_cbs.append(on_update_frame)
 
-
     def add_interactor(self, display_pane_interactor):
         display_pane_interactor.link_with(self)
         self.interactors.append(display_pane_interactor)
 
-
     def set_interaction(self, interaction):
         self.image_plot.interaction = interaction
 
-
     def clear_interaction(self):
         self.image_plot.interaction = None
-        
 
     def add_to_togglebutton_group(self, togglebutton):
         self.togglebutton_group.append(togglebutton)
-                
+
         def on_toggle(change):
             if change['new'] is True:
                 for button in self.togglebutton_group:
                     if button is not togglebutton:
                         button.value = False
-                        
-        togglebutton.observe(on_toggle, 'value')
 
+        togglebutton.observe(on_toggle, 'value')
 
     def show(self):
         self.hidden = False
         self.update_data_and_display()
 
-    
     def hide(self):
         self.hidden = True

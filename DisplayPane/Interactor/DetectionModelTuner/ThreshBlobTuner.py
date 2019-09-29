@@ -9,7 +9,6 @@ import cv2
 import math
 
 
-
 class ThreshBlobTuner(DetectionModelTunerABC):
 
     def make_ipy_controls(self):
@@ -18,12 +17,12 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             self.make_blob_detector_controls()
         ])
         self.model_display.update_data_and_display()
-        
+
         return ipy_controls
 
-
     def make_thresholder_controls(self):
-        colorspace_picker = ColorSpacePicker(colorspace=self.detection_model.thresholder.colorspace)
+        colorspace_picker = ColorSpacePicker(
+            colorspace=self.detection_model.thresholder.colorspace)
         segment_inspector = PixelIntensitySegmentInspector()
 
         self.model_display = DisplayPane(
@@ -31,8 +30,10 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             size=1,
             available_space=self.display_pane.size,
             interactors=[colorspace_picker, segment_inspector],
+            apply_mask=True,
             vision_system=VisionSystem(
-                objects_to_track={ 'obj': VisualObject(detection_model=self.detection_model) },
+                objects_to_track={'obj': VisualObject(
+                    detection_model=self.detection_model)},
                 camera_pixel_width=self.display_pane.video_stream.resolution[0]
             )
         )
@@ -73,7 +74,6 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                 minVal, maxVal = thresh.colorspace.valRange(idx)
                 slider.min = minVal
                 slider.max = maxVal
-            
 
         colorspace_picker.observe(on_colorspace_change)
 
@@ -119,14 +119,17 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                 self.model_display.update_data_and_display()
             return update
 
-        dilation1_slider.observe(on_change_erosion_dilation('dilation1'), 'value')
-        erosion1_slider.observe(on_change_erosion_dilation('erosion1'), 'value')
-        dilation2_slider.observe(on_change_erosion_dilation('dilation2'), 'value')
-        erosion2_slider.observe(on_change_erosion_dilation('erosion2'), 'value')
+        dilation1_slider.observe(
+            on_change_erosion_dilation('dilation1'), 'value')
+        erosion1_slider.observe(
+            on_change_erosion_dilation('erosion1'), 'value')
+        dilation2_slider.observe(
+            on_change_erosion_dilation('dilation2'), 'value')
+        erosion2_slider.observe(
+            on_change_erosion_dilation('erosion2'), 'value')
 
         return ipy.VBox([self.model_display] + channel_sliders +
-            [dilation1_slider, erosion1_slider, dilation2_slider, erosion2_slider])
-
+                        [dilation1_slider, erosion1_slider, dilation2_slider, erosion2_slider])
 
     def make_blob_detector_controls(self):
         param_names = ['Area', 'Circularity', 'InertiaRatio', 'Convexity']
@@ -140,11 +143,13 @@ class ThreshBlobTuner(DetectionModelTunerABC):
 
             # make sure maxArea is only set to the number of pixels on the screen
             if param_name == 'Area':
-                length, width, _ = self.model_display.raw_frame.get(ColorSpaces.BGR).shape
+                length, width, _ = self.model_display.raw_frame.get(
+                    ColorSpaces.BGR).shape
                 max_exponent = math.log(length * width)
                 slider_range = (1, max_exponent)
                 self.detection_model.blob_detector_params['maxArea'] = length * width
-                slider_value = (math.log(slider_value[0]), math.log(self.detection_model.blob_detector_params['maxArea']))
+                slider_value = (math.log(slider_value[0]), math.log(
+                    self.detection_model.blob_detector_params['maxArea']))
             else:
                 slider_range = (0.0, 1.0)
 
@@ -154,8 +159,10 @@ class ThreshBlobTuner(DetectionModelTunerABC):
                     if param_name == 'Area':
                         newMin = math.exp(newMin)
                         newMax = math.exp(newMax)
-                    self.detection_model.blob_detector_params['min' + param_name] = newMin
-                    self.detection_model.blob_detector_params['max' + param_name] = newMax
+                    self.detection_model.blob_detector_params['min' +
+                                                              param_name] = newMin
+                    self.detection_model.blob_detector_params['max' +
+                                                              param_name] = newMax
                     self.model_display.update_data_and_display()
                 return update
 
@@ -169,7 +176,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             )
             slider.layout.width = '95%'
             slider.observe(on_change(param_name), 'value')
-            
+
             sliders.append(slider)
 
         return ipy.VBox(sliders)
