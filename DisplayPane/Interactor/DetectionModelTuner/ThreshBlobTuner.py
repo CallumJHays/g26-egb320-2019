@@ -1,6 +1,6 @@
 from .DetectionModelTunerABC import DetectionModelTunerABC
 from ..ColorSpacePicker import ColorSpacePicker
-from ..PixelIntensitySegmentInspector import PixelIntensitySegmentInspector
+from ..PixelValueSegmentInspector import PixelValueSegmentInspector
 import ipywidgets as ipy
 from VisionSystem import VisionSystem, VisualObject
 from VisionSystem.DetectionModel import ColorSpaces, ColorSpaceScale
@@ -23,7 +23,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
     def make_thresholder_controls(self):
         colorspace_picker = ColorSpacePicker(
             colorspace=self.detection_model.thresholder.colorspace)
-        segment_inspector = PixelIntensitySegmentInspector()
+        segment_inspector = PixelValueSegmentInspector()
 
         self.model_display = DisplayPane(
             frame=self.display_pane.raw_frame,

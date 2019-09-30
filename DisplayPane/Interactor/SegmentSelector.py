@@ -3,24 +3,22 @@ import bqplot as bq
 import ipywidgets as ipy
 import numpy as np
 
-class SegmentSelector(Interactor):
-    
 
+class SegmentSelector(Interactor):
 
     def __init__(self, title="Segment Selector: "):
         # mark to draw over the image plot also used to
         # define the bounding box for which the segment is defined
-        self.segment_mark = None 
-        self.segment_drawer = None # segment drawing interactor
+        self.segment_mark = None
+        self.segment_drawer = None  # segment drawing interactor
         # upon which diagonal to draw the segment
         # within the selected bounding box
         self.segment_draw_diagonal = False
         self.title = title
 
-
     def link_with(self, display_pane):
         super().link_with(display_pane)
-        
+
         self.segment_mark, self.segment_drawer = self.make_segment_mark_and_drawer()
 
         self.ipy_controls = ipy.HBox([
@@ -28,15 +26,14 @@ class SegmentSelector(Interactor):
             self.make_segment_draw_mode_toggler(),
             self.make_segment_draw_diag_switch()
         ])
-        
-        super().set_image_plot_marks([self.segment_mark])
 
+        super().set_image_plot_marks([self.segment_mark])
 
     def make_segment_mark_and_drawer(self):
         mark = bq.Lines(
             scales=self.display_pane.image_plot_scales,
-            x=[0.45, 0.55],
-            y=[0.45, 0.55]
+            x=[0.40, 0.60],
+            y=[0.40, 0.60]
         )
 
         drawer = bq.interacts.BrushSelector(
@@ -47,7 +44,8 @@ class SegmentSelector(Interactor):
 
         def on_interaction(change):
             if change['name'] == 'selected_x':
-                mark.x = np.empty(shape=(0,)) if change['new'] is None else change['new'] 
+                mark.x = np.empty(
+                    shape=(0,)) if change['new'] is None else change['new']
             elif change['name'] == 'selected_y':
                 if change['new'] is None:
                     mark.y = np.empty(shape=(0,))
@@ -61,7 +59,6 @@ class SegmentSelector(Interactor):
         drawer.observe(on_interaction, ['selected_x', 'selected_y'])
 
         return mark, drawer
-        
 
     def make_segment_draw_mode_toggler(self):
         togglebutton = ipy.ToggleButton(
@@ -80,7 +77,6 @@ class SegmentSelector(Interactor):
         self.display_pane.add_to_togglebutton_group(togglebutton)
         return togglebutton
 
-
     def make_segment_draw_diag_switch(self):
         button = ipy.Button(
             value=False,
@@ -94,5 +90,5 @@ class SegmentSelector(Interactor):
             self.update_observers()
 
         button.on_click(handle_click)
-        
+
         return button

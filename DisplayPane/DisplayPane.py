@@ -5,6 +5,7 @@ import numpy as np
 from threading import Thread
 
 from VisionSystem.DetectionModel import Frame, ColorSpaces
+from .Interactor.ResultDisplayer import ResultDisplayer
 
 
 class DisplayPane(ipy.VBox):
@@ -53,6 +54,9 @@ class DisplayPane(ipy.VBox):
         self.labelled_frame = Frame.copy_of(self.filtered_frame)
 
         self.update_data_and_display()
+
+        if self.vision_system is not None:
+            self.interactors.append(ResultDisplayer())
 
         # link all required interactors
         for interactor in self.interactors:
@@ -230,8 +234,7 @@ class DisplayPane(ipy.VBox):
 
             self.labelled_frame.copy(self.filtered_frame, ColorSpaces.BGR)
             if self.vision_system is not None:
-                self.vision_system.update_with_and_label_frame(
-                    self.labelled_frame)
+                self.vision_system.update_with_frame(self.labelled_frame)
 
             for cb in self.update_frame_cbs:
                 cb()

@@ -40,3 +40,8 @@ class Frame():
         this = Frame(np.array([]), ColorSpaces.BGR)
         this.copy(frame, ColorSpaces.BGR)
         return this
+
+    def resolution(self):
+        for img in self.colorspace2img.values():
+            height, width = img.shape[0:2]
+            return width, height
