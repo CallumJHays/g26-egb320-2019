@@ -73,11 +73,6 @@ class ControlServer(Sanic):
         vid_width, vid_height = self.video_stream.resolution
 
         await ws.send(json.dumps({
-            'action': 'stream_active',
-            'payload': True
-        }))
-
-        await ws.send(json.dumps({
             'action': 'initalize',
             'payload': {
                 'width': vid_width,
@@ -161,14 +156,37 @@ class ControlServer(Sanic):
         )
 
     async def remote_control(self, req, ws):
-        while True:
-            cmd_json = await ws.recv()
-            cmd = json.loads(cmd_json)
-            self.drive_system.set_desired_motion(
-                cmd['x'], cmd['y'], cmd['omega'])
+        global doing_frame
+        loop = asyncio.get_event_loop()
+
+        doing_frame = False
+
+        def on_new_frame(frame):
+            global doing_frame
+
+            if not doing_frame:
+                doing_frame = True
+                self.vision_system.update_with_frame(frame)
+                msg = {
+                    name: [(det_result.coords, *bearings_distance) for det_result,
+                           bearings_distance in zip(det_results, bearings_distances)]
+                    for name, (det_results, bearings_distances) in self.vision_system.current_results.items()
+                }
+                loop.create_task(ws.send(json.dumps(msg)))
+                doing_frame = False
+
+        self.video_stream.new_frame_cbs.append(on_new_frame)
+
+        try:
+            while True:
+                cmd_json = await ws.recv()
+                cmd = json.loads(cmd_json)
+                self.drive_system.set_desired_motion(
+                    cmd['x'], cmd['y'], cmd['omega'])
+        except:
+            self.video_stream.new_frame_cbs.remove(on_new_frame)
 
     def run(self, *args, **kwargs):
-        print('running')
         super().run(*args, **kwargs, host='0.0.0.0', port=self.port)
 
 
@@ -211,7 +229,6 @@ if __name__ == "__main__":
 
     ControlServer(
         port=8000,
-        # send a shallow copy of the video stream so that when used as an iterator by the control server it uses
         video_stream=video_stream,
         vision_system=vision_system,
         drive_system=drive_system,

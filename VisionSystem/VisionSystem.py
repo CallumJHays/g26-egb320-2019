@@ -29,12 +29,13 @@ class VisionSystem():
         for _, obj in self.objects_to_track.items():
             obj.camera_pixel_width = camera_pixel_width
 
+        self.current_results = {}
+
     def update_with_frame(self, frame):
         self.current_results = {
             name: obj.update_with_frame(frame)
             for name, obj in self.objects_to_track.items()
         }
-        return self.current_results
 
     def update_with_and_label_frame(self, frame):
         self.update_with_frame(frame)

@@ -154,6 +154,8 @@ export default ({
         <Menu onClose={() => setMenuOpen(false)} api={api} />
       ) : null}
       <Container>
+        <LiveStream api={api} />
+
         <LeftSide>
           <Joystick
             height="100vh"
@@ -170,7 +172,6 @@ export default ({
             }}
             onEnd={() => setDesiredMotion(0, 0, omega)}
           />
-          <LiveStream api={api} />
         </LeftSide>
 
         <RightSide>

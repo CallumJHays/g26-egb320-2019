@@ -18,7 +18,8 @@ class ThreshBlob(DetectionModel):
             self.blob_detector_params = {}
 
             self.blob_detector_params["minArea"] = 1
-            self.blob_detector_params["maxArea"] = 0 # overwritten by tuner to be number of pixels in the image. ie 640 * 480
+            # overwritten by tuner to be number of pixels in the image. ie 640 * 480
+            self.blob_detector_params["maxArea"] = 0
             self.blob_detector_params["minCircularity"] = 0.0
             self.blob_detector_params["maxCircularity"] = 1.0
             self.blob_detector_params["minInertiaRatio"] = 0.0
@@ -27,14 +28,13 @@ class ThreshBlob(DetectionModel):
             self.blob_detector_params["maxConvexity"] = 1.0
         else:
             self.blob_detector_params = blob_detector_params
-        
+
         self.blob_detector_params["blobColor"] = 255
         self.blob_detector_params["filterByInertia"] = True
         self.blob_detector_params["filterByConvexity"] = True
         self.blob_detector_params["filterByColor"] = True
         self.blob_detector_params["filterByArea"] = True
         self.blob_detector_params["filterByCircularity"] = True
-
 
     def apply(self, frame):
         mask = self.thresholder.apply(frame)
@@ -70,12 +70,11 @@ class ThreshBlob(DetectionModel):
             y2 += roi[0][0]
 
             results.append(DetectionResult(
-                coords=((x1, y1), (x2, y2)),
+                coords=((int(x1), int(y1)), (int(x2), int(y2))),
                 bitmask=mask
             ))
 
         return results
-
 
 
 def find_bounding_box(contours):
@@ -89,7 +88,7 @@ def find_bounding_box(contours):
                 x1 = cx
             elif x2 < cx:
                 x2 = cx
-            
+
             if y1 > cy:
                 y1 = cy
             elif y2 < cy:
