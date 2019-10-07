@@ -1,10 +1,11 @@
 import styled, { css } from "styled-components";
-import { useEffect, createRef, useState } from "react";
+import { useEffect, createRef, useState, Fragment } from "react";
 import { useApi } from "../api";
 import WSAvcPlayer from "ws-avc-player";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExpand } from "@fortawesome/free-solid-svg-icons";
 import { Stage, Layer, Rect, Text } from "react-konva";
+import useResizeObserver from "use-resize-observer";
 
 const CATEGORICAL_COLORS = [
   "#d32f2f", // red
@@ -62,21 +63,26 @@ const LiveStreamErrorMessage = styled.p`
 
 const linkPlayer = (
   api,
-  reactRef = createRef(),
-  [domRef, setDomRef] = useState(null),
-  [streamActive, setStreamActive] = useState(false)
+  [reactRef, width, height] = useResizeObserver(),
+  [streamResolution, setStreamResolution] = useState(null),
+  [connected, setConnected] = useState(false)
 ) => {
   useEffect(() => {
-    if (domRef === null) {
+    if (!connected) {
       const canvas = reactRef.current;
-      setDomRef(canvas);
       const player = new WSAvcPlayer(canvas, "webgl", 1, 35);
       player.connect(api.getLiveStreamUrl());
-      player.on("frame_shift", () => setStreamActive(true));
+      player.on("initalized", e => {
+        console.log("caught initalize");
+        player.on("frame_shift", () =>
+          setStreamResolution({ width: e.width, height: e.height })
+        );
+      });
+      setConnected(true);
     }
   });
 
-  return { reactRef, domRef, streamActive };
+  return { reactRef, width, height, streamResolution };
 };
 
 const linkVisionSystem = (
@@ -89,7 +95,9 @@ const linkVisionSystem = (
 
 const LiveStream = ({
   api,
-  _playerState: { reactRef, domRef, streamActive } = linkPlayer(api) as any,
+  _playerState: { reactRef, width, height, streamResolution } = linkPlayer(
+    api
+  ) as any,
   _visionState: visionResults = linkVisionSystem(api),
   _fullscreenState: [fullscreen, setFullscreen] = useState(false)
 }) => (
@@ -98,49 +106,84 @@ const LiveStream = ({
       <FontAwesomeIcon icon={faExpand} />
     </FullscreenButton>
 
-    {streamActive ? null : (
+    {streamResolution ? (
+      ((ctr = 0) => (
+        <Stage
+          width={width}
+          height={height}
+          style={{
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            position: "absolute"
+          }}
+        >
+          <Layer>
+            {Object.keys(visionResults).map(
+              (objName, colorIdx, _, color = CATEGORICAL_COLORS[colorIdx]) =>
+                visionResults[objName].map(
+                  (
+                    [[[x1, y1], [x2, y2]], bearing, distance],
+                    _idx,
+                    _arr,
+                    rescale = streamResolution
+                      ? rescaler(streamResolution, { width, height })
+                      : x => x
+                  ) => {
+                    if (width === 1 && height === 1) {
+                      return null;
+                    }
+                    const res = (
+                      <Fragment key={ctr}>
+                        <Rect
+                          x={rescale(x1, true)}
+                          y={rescale(streamResolution.height - y2, false)}
+                          width={rescale(x2 - x1, true)}
+                          height={rescale(y2 - y1, false)}
+                          stroke={color}
+                          strokeWidth={1}
+                        />
+                        {fullscreen ? (
+                          <Text
+                            x={rescale(x1 + 2, true)}
+                            y={rescale(streamResolution.height - y2 + 2, false)}
+                            fill={color}
+                            text={`${objName}: ${distance}cm@${bearing}°`}
+                          />
+                        ) : null}
+                      </Fragment>
+                    );
+                    console.log("got res", res);
+                    ctr += 1;
+                    return res;
+                  }
+                )
+            )}
+          </Layer>
+        </Stage>
+      ))()
+    ) : (
       <LiveStreamErrorMessage>LOADING</LiveStreamErrorMessage>
     )}
-
-    {domRef ? (
-      <Stage
-        width={domRef.width}
-        height={domRef.height}
-        style={{ top: 0, right: 0, bottom: 0, left: 0, position: "absolute" }}
-      >
-        <Layer>
-          {Object.keys(visionResults).map(
-            (objName, colorIdx, _, color = CATEGORICAL_COLORS[colorIdx]) =>
-              visionResults[objName].map(
-                ([[[x1, y1], [x2, y2]], bearing, distance]) => (
-                  <>
-                    <Rect
-                      x={x1}
-                      y={domRef.height - y2}
-                      width={x2 - x1}
-                      height={y2 - y1}
-                      stroke={color}
-                      strokeWidth={1}
-                    />
-                    {fullscreen ? (
-                      <Text
-                        x={x1}
-                        y={domRef.height - y2}
-                        fill={color}
-                        text={`${objName}: ${distance}@${bearing}`}
-                      />
-                    ) : null}
-                  </>
-                )
-              )
-          )}
-        </Layer>
-      </Stage>
-    ) : null}
 
     <canvas ref={reactRef} style={{ width: "100%", height: "100%" }} />
   </LiveStreamContainer>
 );
+
+const rescaler = (
+  { width: stream_width, height: stream_height },
+  { width, height }
+) => (val, is_x_dir) => {
+  console.log("rescaling ", val, "is_x_dir", is_x_dir);
+  console.log("stream resolution", stream_width, stream_height);
+  console.log("curr resolution", width, height);
+  const res = is_x_dir
+    ? (val * width) / stream_width
+    : (val * height) / stream_height;
+  console.log("rescale result:", res);
+  return res;
+};
 
 export const ManagedStream = ({ api = useApi() }) =>
   api ? <LiveStream api={api} /> : null;

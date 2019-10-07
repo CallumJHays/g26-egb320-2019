@@ -44,7 +44,10 @@ class DisplayPane(ipy.VBox):
             if frame is not None and type(frame is Frame):
                 self.raw_frame = frame
             elif img_path is not None:
-                self.raw_frame = Frame(cv2.imread(img_path), ColorSpaces.BGR)
+                bgr = cv2.imread(img_path)
+                if bgr is None:
+                    raise Exception("Failed to read image at img_path")
+                self.raw_frame = Frame(bgr, ColorSpaces.BGR)
             else:
                 self.raw_frame = next(iter(self.video_stream))
         else:
@@ -227,9 +230,9 @@ class DisplayPane(ipy.VBox):
     def update_data_and_display(self):
         if not self.hidden:
             # filter the image if need be
-            self.filtered_frame.copy(self.raw_frame, ColorSpaces.BGR)
+            self.filtered_frame.link(self.raw_frame, ColorSpaces.BGR)
             if self.filter_fn is not None:
-                self.filtered_frame.link(self.filter_fn(
+                self.filtered_frame.copy(self.filter_fn(
                     self.filtered_frame), ColorSpaces.BGR)
 
             self.labelled_frame.copy(self.filtered_frame, ColorSpaces.BGR)

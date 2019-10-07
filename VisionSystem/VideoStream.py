@@ -10,8 +10,8 @@ except Exception:
     PICAMERA_MODE = False
 
 
-PI_CAM_SENSOR_MODE = 5
-PI_CAM_RESOLUTION = (1640, 922)
+PI_CAM_SENSOR_MODE = 4
+PI_CAM_RESOLUTION = (1640, 1232)
 
 
 class FrameIterator():
@@ -58,6 +58,7 @@ class VideoStream():
             )
         else:
             if PICAMERA_MODE:
+                print('resolution', PI_CAM_RESOLUTION)
                 self.resolution = PiResolution(
                     int(PI_CAM_RESOLUTION[0] / downsample_scale),
                     int(PI_CAM_RESOLUTION[1] / downsample_scale),

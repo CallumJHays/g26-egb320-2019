@@ -23,6 +23,9 @@ class Frame():
         raise "Couldn't find"
 
     def link(self, img, colorspace):
+        if isinstance(img, Frame):
+            img = img.get(colorspace)
+
         self.colorspace2img = {
             colorspace: img
         }

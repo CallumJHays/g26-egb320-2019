@@ -35,7 +35,7 @@ export const useApi = ([api, setApi] = useState(null)) =>
       })();
 
 const _wsUrl = uri => {
-  const url = new URL(`ws://localhost:8000/${uri}`, window.location.href);
+  const url = new URL(`/${uri}`, window.location.href);
   url.protocol = url.protocol.replace("http", "ws");
   return url.href;
 };

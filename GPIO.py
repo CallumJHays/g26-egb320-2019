@@ -9,10 +9,10 @@
 
 from gpiozero import PWMOutputDevice, LED, Button, GPIODevice as GPIOZDev, OutputDevice, Device
 try:
-    from RPi.GPIO import OUT, Instead
+    from RPi.GPIO import OUT, IN
     MOCK_MODE = False
     from gpiozero.pins.rpigpio import RPiGPIOFactory
-    Device.pin_factory = RPiGPIOFactory
+    Device.pin_factory = RPiGPIOFactory()
 except ModuleNotFoundError:
     OUT = 1
     IN = 0

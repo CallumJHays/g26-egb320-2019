@@ -21,6 +21,8 @@ import random
 from concurrent.futures import TimeoutError
 import select
 
+from VisionSystem.DetectionModel import ColorSpaces
+
 
 SERVER_BASE_DIR = Path(__file__).parents[0].absolute()
 CLIENT_STATICS_DIR = SERVER_BASE_DIR / 'out'
@@ -105,7 +107,7 @@ class ControlServer(Sanic):
             notiv.register(output_h264_stream, select.POLLIN)
 
             await FFmpeg(
-                executable="/home/cal/miniconda3/bin/ffmpeg",
+                # executable="/home/cal/berryconda3/bin/ffmpeg",
                 global_options=['-y'],
                 inputs={
                     jpeg_input_fifo_path: '-f image2pipe -vcodec mjpeg'},
@@ -162,18 +164,19 @@ class ControlServer(Sanic):
         doing_frame = False
 
         def on_new_frame(frame):
-            global doing_frame
+            pass
+            # global doing_frame
 
-            if not doing_frame:
-                doing_frame = True
-                self.vision_system.update_with_frame(frame)
-                msg = {
-                    name: [(det_result.coords, *bearings_distance) for det_result,
-                           bearings_distance in zip(det_results, bearings_distances)]
-                    for name, (det_results, bearings_distances) in self.vision_system.current_results.items()
-                }
-                loop.create_task(ws.send(json.dumps(msg)))
-                doing_frame = False
+            # if not doing_frame:
+            #     doing_frame = True
+            #     self.vision_system.update_with_frame(frame)
+            #     msg = {
+            #         name: [(det_result.coords, *bearings_distance) for det_result,
+            #                bearings_distance in zip(det_results, bearings_distances)]
+            #         for name, (det_results, bearings_distances) in self.vision_system.current_results.items()
+            #     }
+            #     loop.create_task(ws.send(json.dumps(msg)))
+            #     doing_frame = False
 
         self.video_stream.new_frame_cbs.append(on_new_frame)
 
@@ -193,7 +196,7 @@ class ControlServer(Sanic):
 if __name__ == "__main__":
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-    from VisionSystem.DetectionModel import ThreshBlob, ColorSpaces
+    from VisionSystem.DetectionModel import ThreshBlob
     from VisionSystem import VideoStream, VisionSystem, VisualObject
 
     # use any available live feed device such as a webcam

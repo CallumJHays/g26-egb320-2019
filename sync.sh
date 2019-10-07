@@ -7,5 +7,5 @@ rsync -avzuiP ./* localpi:~/SoccerRobot \
 
 rsync -avzuiP localpi:~/SoccerRobot/* . \
     --exclude data \
-    --exclude *__pycache__
+    --exclude *__pycache__ \
     --exclude ControlServer/out \

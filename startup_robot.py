@@ -106,7 +106,7 @@ def main():
 
     print("Launching control server...")
     try:
-        video_stream = VideoStream()
+        video_stream = VideoStream(downsample_scale=8)
         vision_system = setup_vision_system(video_stream.resolution)
 
         try:
