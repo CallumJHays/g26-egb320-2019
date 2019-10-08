@@ -16,9 +16,9 @@ class DisplayPane(ipy.VBox):
 
     def __init__(self, video_stream=None, img_path=None, img=None, interactors=None, size=0.5, vision_system=None, frame=None,
                  filter_fn=None, apply_filter_to_vision_system_input=False, update_frame_cbs=None, display_colorspace=ColorSpaces.BGR,
-                 available_space=1, apply_mask=False, **kwargs):
+                 available_space=1, apply_mask=False, dataset=None, **kwargs):
 
-        if not (video_stream is not None) ^ (img is not None) ^ (frame is not None) ^ (img_path is not None):
+        if not (video_stream is not None) ^ (img is not None) ^ (frame is not None) ^ (img_path is not None) ^ (dataset is not None):
             raise Exception(
                 "either path, img or frame must be defined, and not both")
 
@@ -41,7 +41,9 @@ class DisplayPane(ipy.VBox):
 
         # read the data from a file to display
         if img is None:
-            if frame is not None and type(frame is Frame):
+            if dataset is not None:
+                self.raw_frame = next(iter(dataset))
+            elif frame is not None and type(frame is Frame):
                 self.raw_frame = frame
             elif img_path is not None:
                 bgr = cv2.imread(img_path)

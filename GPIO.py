@@ -94,18 +94,15 @@ class PWM(GPIODevice):
         assert frequency > 0
         self.pin = pin
         self.frequency = frequency
-        self.dutycycle = dutycycle
 
         if not MOCK_MODE:
-            self.pwm = PWMOutputDevice(self.pin, initial_value=True)
+            self.pwm = PWMOutputDevice(self.pin, initial_value=dutycycle)
             self.ChangeDutyCycle(dutycycle)
             self.ChangeFrequency(frequency)
 
     def ChangeDutyCycle(self, dutycycle):
         assert 0 <= dutycycle and dutycycle <= 100
-        self.dutycycle = dutycycle
-        if not MOCK_MODE:
-            self.pwm.value = self.dutycycle / 100
+        self.pwm.value = dutycycle / 100
 
     def ChangeFrequency(self, frequency):
         self.frequency = frequency

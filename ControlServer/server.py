@@ -21,7 +21,8 @@ import random
 from concurrent.futures import TimeoutError
 import select
 
-from VisionSystem.DetectionModel import ColorSpaces
+
+# from VisionSystem.DetectionModel import ColorSpaces
 
 
 SERVER_BASE_DIR = Path(__file__).parents[0].absolute()
@@ -185,7 +186,7 @@ class ControlServer(Sanic):
                 cmd_json = await ws.recv()
                 cmd = json.loads(cmd_json)
                 self.drive_system.set_desired_motion(
-                    cmd['x'], cmd['y'], cmd['omega'])
+                    cmd['x'], cmd['y'], cmd['omega'] / 10)
         except:
             self.video_stream.new_frame_cbs.remove(on_new_frame)
 

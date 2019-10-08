@@ -1,5 +1,7 @@
 import math
 import GPIO
+import numpy as np
+
 
 class MotorDriver(GPIO.PWM):
 
@@ -10,9 +12,7 @@ class MotorDriver(GPIO.PWM):
         GPIO.setup(dir2, GPIO.OUT)
         self.dir2_pin = dir2
 
-
         super().__init__(enable, frequency)
-
 
     def drive(self, speed):
         """
@@ -25,97 +25,60 @@ class MotorDriver(GPIO.PWM):
         GPIO.output(self.dir1_pin, dir)
         GPIO.output(self.dir2_pin, not dir)
         self.ChangeDutyCycle(abs(speed) * 100)
-            
 
 
 class DriveSystem(GPIO.GPIODevice):
 
-    BACK = MotorDriver(enable=19, dir1=13, dir2 =26)
-    FRONT_LEFT = MotorDriver(enable=6, dir1 = 5, dir2 = 12)
-    FRONT_RIGHT = MotorDriver(enable=20, dir1=16, dir2 = 21)
-    
-    
+    BACK = MotorDriver(enable=19, dir1=13, dir2=26)
+    FRONT_LEFT = MotorDriver(enable=6, dir1=5, dir2=12)
+    FRONT_RIGHT = MotorDriver(enable=20, dir1=21, dir2=16)
+
     config = {
         'FRONT_LEFT': FRONT_LEFT,
         'FRONT_RIGHT': FRONT_RIGHT,
         'BACK': BACK
     }
-    
 
     def set_desired_motion(self, x, y, omega):
         "Power the motors in such a way that theoretically we achieve the desired translational acceleration and rotational velocity (omega)"
-        FWD_SPEED = 50
-        ROT_SPEED = 25
+        # copying http://mate.tue.nl/mate/pdfs/7566.pdf
+        DIST_WHEEL_2_CENTER = 0.09
+        WHEEL_RADIUS = 0.04
+        A1, A2, A3 = 20, 160, 270
 
-        if omega != 0:
-            speedFR = ROT_SPEED / 255
-            speedFL = ROT_SPEED / 255
-            speedB = ROT_SPEED / 255
-            if omega < 0:
-                speedFR = -speedFR
-                speedFL = -speedFL
-                speedB = -speedB
-        else:
-            if x == 0:
-                if y > 0:
-                    print("go right")
-                    dir_angle = 1.57
-                elif y < 0:
-                    print("go left")
-                    dir_angle = 4.71
-                else:
-                    dir_angle = 0
-            else:
-                dir_angle = math.atan(y/x)
-            #print(dir_angle)
-            
-            theta1 = math.pi / 9
-            theta2 = 8 * math.pi / 9
-            theta3 = 3 * math.pi / 2
-            
-            FR = math.cos(theta1 - dir_angle)
-            FL = math.cos(theta2 - dir_angle)
-            B = math.cos(theta3 - dir_angle)
-            #print("front right   " , FR)
-            #print("front left   " , FL)
-            #print("front back   " , B)
-            
-            pwmfloor = 127;
-            speedFR = abs(FR * 255 * 0.5) / 255 + pwmfloor
-            speedFL = abs(FL * 255 * 0.5) / 255 + pwmfloor
-            speedB = abs(B * 255 * 0.5) / 255 + pwmfloor
-        
-#         if y != 0:
-#             speedB = 0
-#             speedFL = FWD_SPEED / 255
-#             speedFR = ( FWD_SPEED / 255 )
-#             if y < 0:
-#                 speedB = 0
-#                 speedFL = -1 * (FWD_SPEED / 255)
-#                 speedFR = -1 * ( FWD_SPEED / 255 )
-#         elif omega != 0:
-#             speedFR = ROT_SPEED / 255
-#             speedFL = ROT_SPEED / 255
-#             speedB = ROT_SPEED / 255
-#             if omega < 0:
-#                 speedFR = -speedFR
-#                 speedFL = -speedFL
-#                 speedB = -speedB
-#         else:
-#             speedFR = 0
-#             speedFL = 0
-#             speedB = 0
+        # only using local frame, therefore local-global translation angle (theta) is 0
 
-#         # 40 slow
-        self.drive_motors(speedFL, speedFR, speedB)
+        def wheel_omega(wheel_angle):
+            radians = math.pi * wheel_angle / 180
+            return (
+                math.sin(radians) * x +
+                math.cos(radians) * y +
+                DIST_WHEEL_2_CENTER * omega
+            ) / WHEEL_RADIUS
 
-    
+        print('set desired motion', x, y, omega)
+
+        self.drive_motors(
+            wheel_omega(A1),
+            wheel_omega(A2),
+            wheel_omega(A3)
+        )
+
     def drive_motors(self, a, b, c):
         """
         Drives the motors using PWM and toggling the enable pins
-        
+
         """
-        # obviously, this is not correct
+        abss = (abs(a), abs(b), abs(c))
+        # rescale by the maximum allowable pwm
+        if abss[0] > 1 or abss[1] > 1 or abss[2] > 1:
+            max_ = max(abss)
+            a /= max_
+            b /= max_
+            c /= max_
+
+        print(a, b, c)
+
         self.FRONT_LEFT.drive(a)
         self.FRONT_RIGHT.drive(b)
         self.BACK.drive(c)

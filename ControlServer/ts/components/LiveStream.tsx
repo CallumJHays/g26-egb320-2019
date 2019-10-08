@@ -70,14 +70,13 @@ const linkPlayer = (
   useEffect(() => {
     if (!connected) {
       const canvas = reactRef.current;
-      const player = new WSAvcPlayer(canvas, "webgl", 1, 35);
-      player.connect(api.getLiveStreamUrl());
-      player.on("initalized", e => {
-        console.log("caught initalize");
-        player.on("frame_shift", () =>
-          setStreamResolution({ width: e.width, height: e.height })
-        );
-      });
+      // const player = new WSAvcPlayer(canvas, "webgl", 1, 35);
+      // player.connect(api.getLiveStreamUrl());
+      // player.on("initalized", e => {
+      //   player.on("frame_shift", () =>
+      //     setStreamResolution({ width: e.width, height: e.height })
+      //   );
+      // });
       setConnected(true);
     }
   });
