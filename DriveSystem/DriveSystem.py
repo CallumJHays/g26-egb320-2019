@@ -77,8 +77,6 @@ class DriveSystem(GPIO.GPIODevice):
             b /= max_
             c /= max_
 
-        print(a, b, c)
-
         self.FRONT_LEFT.drive(a)
         self.FRONT_RIGHT.drive(b)
         self.BACK.drive(c)

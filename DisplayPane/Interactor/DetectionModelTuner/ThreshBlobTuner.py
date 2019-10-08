@@ -34,7 +34,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
             vision_system=VisionSystem(
                 objects_to_track={'obj': VisualObject(
                     detection_model=self.detection_model)},
-                camera_pixel_width=self.display_pane.video_stream.resolution[0]
+                resolution=self.display_pane.vision_system.resolution
             )
         )
         self.model_display.link_frame(self.display_pane)

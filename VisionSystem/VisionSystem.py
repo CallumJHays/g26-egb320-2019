@@ -20,14 +20,15 @@ class VisionSystem():
         (0, 121, 107)  # teal
     ]
 
-    def __init__(self, objects_to_track, camera_pixel_width):
+    def __init__(self, objects_to_track, resolution):
         # objects_to_track <dict<key=str, val=VisualObject>>
         # the objects that the vision system should attempt to track every time
         # update_with_frame() is called
         self.objects_to_track = objects_to_track or {}
+        self.resolution = resolution
 
         for _, obj in self.objects_to_track.items():
-            obj.camera_pixel_width = camera_pixel_width
+            obj.resolution = resolution
 
         self.current_results = {}
 

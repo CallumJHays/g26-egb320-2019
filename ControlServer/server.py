@@ -21,8 +21,10 @@ import random
 from concurrent.futures import TimeoutError
 import select
 
-
-# from VisionSystem.DetectionModel import ColorSpaces
+try:
+    from VisionSystem.DetectionModel import ColorSpaces
+except:
+    pass
 
 
 SERVER_BASE_DIR = Path(__file__).parents[0].absolute()

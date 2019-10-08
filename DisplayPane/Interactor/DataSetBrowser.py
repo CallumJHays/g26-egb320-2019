@@ -17,7 +17,7 @@ class DataSetBrowser(Interactor):
             ipy.Label("Dataset Browser"),
             ipy.VBox([ipy.HBox(["filepath", "type", "labelled", "open"])] + [
                 ipy.HBox([filepath, dataset.type_str,
-                          f'{dataset.n_labelled}/{len(dataset)}', examples])
+                          f'{dataset.n_labelled}/{len(dataset)}', ""])
                 for filepath, dataset
                 in self.dataset.files.items()
             ])

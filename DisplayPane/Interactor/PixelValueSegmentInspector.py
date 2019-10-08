@@ -3,6 +3,7 @@ from .SegmentSelector import SegmentSelector
 import ipywidgets as ipy
 import bqplot as bq
 import numpy as np
+import math
 
 
 class PixelValueSegmentInspector(Interactor):
@@ -93,8 +94,14 @@ class PixelValueSegmentInspector(Interactor):
                 self.pixel_intensities_mark.y = np.empty(shape=(0,))
                 return
 
-            gradient = (final_y - init_y) / den
-            direction = int(gradient / abs(gradient))
+            def pos_neg(val):
+                return -1 if val < 0 else 1
+
+            num = final_y - init_y
+            gradient = num / den
+
+            direction = pos_neg(gradient) if math.isnan(
+                gradient) else pos_neg(num)
             curr_y = init_y
 
             for x in range(init_x, final_x):

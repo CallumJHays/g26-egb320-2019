@@ -20,7 +20,7 @@ class ResultDisplayer(Interactor):
             close_path=True,
             scales=display_pane.image_plot_scales)
 
-        self.labels = bq.Label()
+        self.labels = bq.Label(scales=display_pane.image_plot_scales)
 
         def on_result_change():
             boxes_x = []

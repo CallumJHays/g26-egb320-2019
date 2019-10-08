@@ -6,6 +6,7 @@ from threading import Thread
 
 from VisionSystem.DetectionModel import Frame, ColorSpaces
 from .Interactor.ResultDisplayer import ResultDisplayer
+from .Interactor.DataSetBrowser import DataSetBrowser
 
 
 class DisplayPane(ipy.VBox):
@@ -27,6 +28,7 @@ class DisplayPane(ipy.VBox):
         self.size = size
         self.available_space = available_space
         self.video_stream = video_stream
+        self.dataset = dataset
         self.togglebutton_group = []
         self.interactors = interactors or []
         self.vision_system = vision_system
@@ -59,6 +61,9 @@ class DisplayPane(ipy.VBox):
         self.labelled_frame = Frame.copy_of(self.filtered_frame)
 
         self.update_data_and_display()
+
+        if self.dataset is not None:
+            self.interactors.append(DataSetBrowser(self.dataset))
 
         if self.vision_system is not None:
             self.interactors.append(ResultDisplayer())
@@ -124,7 +129,8 @@ class DisplayPane(ipy.VBox):
     def make_image_tools(self, image_plot):
         widget_list = [
             self.make_toggle_panzoom_button(image_plot),
-            self.make_reset_zoom_button()
+            self.make_reset_zoom_button(),
+            self.make_toggle_apply_mask_button()
         ]
 
         if self.video_stream is not None:
@@ -140,6 +146,23 @@ class DisplayPane(ipy.VBox):
         for frame in self.video_stream:
             self.raw_frame = frame
             self.update_data_and_display()
+
+    def make_toggle_apply_mask_button(self):
+
+        button = ipy.ToggleButton(
+            value=False,
+            tooltip='Toggle Mask',
+            icon='eye-slash'
+        )
+        button.layout.width = '60px'
+
+        def on_toggle(change):
+            self.apply_mask = not self.apply_mask
+            self.update_data_and_display()
+
+        button.observe(on_toggle, 'value')
+
+        return button
 
     def make_toggle_panzoom_button(self, image_plot):
         self.image_plot_panzoom = bq.interacts.PanZoom(

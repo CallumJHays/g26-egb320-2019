@@ -9,8 +9,8 @@ class VisualObject():
     FORWARD_DIRECTION = 0
     FOCAL_CONSTANT = 100
 
-    def __init__(self, real_size=None,  detection_model=None, result_limit=None, camera_width=None):
-        self.camera_pixel_width = camera_width
+    def __init__(self, real_size=None,  detection_model=None, result_limit=None, resolution=None):
+        self.resolution = resolution
 
         # real_size <tupe<float, float, float>>
         # real size of object needing detection in metres
@@ -46,8 +46,16 @@ class VisualObject():
 
         for result in self.detection_results:
             ((x1, y1), (x2, y2)) = result.coords
-            bearing = ((x1 + x2) / 2 / self.camera_pixel_width - 0.5) \
-                * self.CAMERA_FOV + self.FORWARD_DIRECTION
+            x, y = (x1 + x2) / 2, (y1 + y2) / 2
+
+            x = x / self.resolution[0] - 0.5
+            y = y / self.resolution[1] - 0.5
+            # front-facing cam
+            # bearing = ((x1 + x2) / 2 / self.resolution[0] - 0.5) \
+            #     * self.CAMERA_FOV + self.FORWARD_DIRECTION
+
+            # omni-cam
+            bearing = math.atan2(y, x)
             pixel_width = x2 - x1
             pixel_height = y2 - y1
 
