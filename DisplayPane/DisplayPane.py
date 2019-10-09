@@ -38,13 +38,15 @@ class DisplayPane(ipy.VBox):
         self.hidden = False
         self.display_colorspace = display_colorspace
         self.apply_mask = apply_mask
+        self.dataset_idx = 0
 
         self.update_frame_cbs = update_frame_cbs or []
 
         # read the data from a file to display
         if img is None:
             if dataset is not None:
-                self.raw_frame = next(iter(dataset))
+                bgr, _ = next(iter(dataset))
+                self.raw_frame = Frame(bgr, ColorSpaces.BGR)
             elif frame is not None and type(frame is Frame):
                 self.raw_frame = frame
             elif img_path is not None:
@@ -140,6 +142,10 @@ class DisplayPane(ipy.VBox):
                 # start the livestream pipe to this displaypane on a separate thread
                 Thread(target=self.pipe_livestream).start()
 
+        if self.dataset is not None:
+            if self.dataset.type_str in ["img-dir", "vid"]:
+                widget_list.append(self.make_dataset_frame_browser())
+
         return ipy.HBox(widget_list)
 
     def pipe_livestream(self):
@@ -206,6 +212,56 @@ class DisplayPane(ipy.VBox):
 
         return button
 
+    def make_dataset_frame_browser(self):
+        if self.dataset.type_str == "vid":
+            cap = cv2.VideoCapture(self.dataset.filepath)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+        if self.dataset.type_str == "img-dir":
+            fps = 2
+        last_frame = len(self.dataset) - 1
+
+        player = ipy.Play(
+            interval=1000 / fps,
+            max=last_frame
+        )
+        slider = ipy.IntSlider(max=last_frame)
+        ipy.link((player, 'value'), (slider, 'value'))
+
+        def on_framechange(change):
+            self.dataset_idx = change['new']
+            self.raw_frame = self.dataset.read_frame(self.dataset_idx)
+            self.update_data_and_display()
+
+        player.observe(on_framechange, 'value')
+        slider.observe(on_framechange, 'value')
+
+        def change_slider(amount):
+            def cb(_change):
+                slider.value += amount
+                if slider.value > last_frame:
+                    slider.value = last_frame
+                elif slider.value < 0:
+                    slider.value = 0
+            return cb
+
+        prev_frame_button = ipy.Button(
+            icon='step-backward',
+            tooltip='Previous Frame'
+        )
+        prev_frame_button.layout.width = '60px'
+        prev_frame_button.on_click(change_slider(-1))
+
+        next_frame_button = ipy.Button(
+            icon='step-forward',
+            tooltip='Next Frame'
+        )
+        next_frame_button.layout.width = '60px'
+        next_frame_button.on_click(change_slider(+1))
+
+        controller = ipy.HBox(
+            [prev_frame_button, player, next_frame_button, slider])
+        return controller
+
     def make_video_controller(self):
         last_frame = self.video_stream.cap.get(cv2.CAP_PROP_FRAME_COUNT) - 1
 
@@ -268,6 +324,7 @@ class DisplayPane(ipy.VBox):
                 cb()
 
             bgr_img = self.labelled_frame.get(self.display_colorspace)
+
             # apply the mask here for view purposes
             if self.apply_mask and self.labelled_frame.mask is not None:
                 bgr_img = cv2.bitwise_and(

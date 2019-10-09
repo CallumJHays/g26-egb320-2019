@@ -191,7 +191,10 @@ export default ({
           <ButtonContainer>
             <ConfigButtons>
               <ToggleDribbleButton
-                onClick={() => setDribbling(!isDribbling)}
+                onClick={() => {
+                  api.setDribbling(!isDribbling);
+                  setDribbling(!isDribbling);
+                }}
                 className={isDribbling ? "on" : null}
                 on={isDribbling}
               >
@@ -203,7 +206,7 @@ export default ({
               </ToggleDribbleButton>
               <MenuButton onClick={() => setMenuOpen(true)}>MENU</MenuButton>
             </ConfigButtons>
-            <KickButton>
+            <KickButton onClick={api.kick}>
               <b>KICK</b>
             </KickButton>
           </ButtonContainer>

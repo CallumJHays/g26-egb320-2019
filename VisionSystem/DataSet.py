@@ -2,19 +2,26 @@ import cv2
 import os
 from collections import OrderedDict
 import pickle
+from itertools import islice
 
+from .DetectionModel.Frame import Frame
 from .DetectionModel.DetectionResult import DetectionResult
+from .VisionSystem import ColorSpaces
+from .Label import FrameLabels
 
 
 class DataSetIterator():
 
     def __init__(self, dataset):
         self.dataset = dataset
-        self.idx = 0
+        self.label_iter = iter(dataset.labels.values())
+        self.curr_vid_file = None
+        self.bgr = None
+        self.curr_img_dir_dset_iter = None
+
         if any(dataset.files):
             self.file_iter = iter(dataset.files)
-            self.bgr = None
-            self.curr_vid_file = None
+
         else:
             self.file_iter = None
             # its a single file - source it!
@@ -27,24 +34,35 @@ class DataSetIterator():
         return len(self.dataset)
 
     def source_file(self, filepath):
-        self.bgr = cv2.imread(filepath)
-        if self.bgr is None:
-            self.curr_vid_file = cv2.VideoCapture(filepath)
+        if os.path.isdir(filepath):
+            dset = self.dataset.files[filepath]
+            assert dset.type_str == "img-dir"
+
+            self.curr_img_dir_dset_iter = (
+                cv2.imread(filepath) for filepath in dset.image_files)
+        else:
+            self.bgr = cv2.imread(filepath)
+            if self.bgr is None:
+                self.curr_vid_file = cv2.VideoCapture(filepath)
 
     def __next__(self):
         if self.bgr is not None:
             bgr = self.bgr
             self.bgr = None
-            return bgr, self.dataset.get_labels(0)
+            return bgr, next(self.label_iter)
         elif self.curr_vid_file is not None:
             ret, bgr = self.curr_vid_file.read()
 
             if ret:
-                labels = self.dataset.get_labels(self.idx)
-                self.idx += 1
-                return bgr, labels
+                return bgr, next(self.label_iter)
             else:
                 self.curr_vid_file = None
+        elif self.curr_img_dir_dset_iter is not None:
+            bgr = next(self.curr_img_dir_dset_iter)
+            if bgr is None:
+                self.curr_img_dir_dset_iter = None
+            else:
+                return bgr, next(self.label_iter)
 
         if self.file_iter is not None:
             filepath = next(self.file_iter)
@@ -83,26 +101,15 @@ class DataSet():
         bgr = cv2.imread(filepath)
         if bgr is not None:
             self.length = 1
-            self.type_str = "image"
+            self.type_str = "img"
         else:
             # try to read it as a video file
             cap = cv2.VideoCapture(filepath)
             if cap.isOpened():
                 self.length = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-                self.type_str = "video"
+                self.type_str = "vid"
             else:
                 self.rescan_files()
-
-                def directory_only_images():
-                    return any(self.files) and all([f.type_str == "image" for f in self.files.values()])
-
-                if directory_only_images():
-                    self.type_str = "image-directory"
-                else:
-                    if not os.path.isdir(filepath):
-                        raise Exception(
-                            f"given filepath: {filepath} is neither a directory, nor image or video of recognizeable format")
-                    self.type_str = "directory"
 
             cap.release()
 
@@ -112,20 +119,50 @@ class DataSet():
         self.length = 0
         self.files = OrderedDict()
 
-        for root, _, files in os.walk(self.filepath):
-            for file_ in files:
-                # try opening it
-                filepath = os.path.join(root, file_)
-                dataset = DataSet(filepath)
-                self.files[filepath] = dataset
-                if filepath in self.labels:
-                    self.n_labelled += sum(
-                        label.complete for label in self.labels[filepath])
-                if filepath not in self.labels:
-                    # instantiate an empty framelabels object for each example in the dataset
-                    self.labels[filepath] = [FrameLabels()
-                                             for _ in range(len(dataset))]
-                self.length += len(dataset)
+        for item in os.listdir(self.filepath):
+            # try opening it
+            filepath = os.path.join(self.filepath, item)
+            dataset = DataSet(filepath)
+            self.files[filepath] = dataset
+            if filepath in self.labels:
+                self.n_labelled += sum(
+                    label.complete for label in self.labels[filepath])
+            if filepath not in self.labels:
+                # instantiate an empty framelabels object for each example in the dataset
+                self.labels[filepath] = [FrameLabels()
+                                         for _ in range(len(dataset))]
+            self.length += len(dataset)
+
+        def directory_only_images():
+            return any(self.files) and all([f.type_str == "img" for f in self.files.values()])
+
+        if directory_only_images():
+            self.type_str = "img-dir"
+            self.image_files = self.files
+            self.files = OrderedDict({self.filepath: self})
+            self.labels = OrderedDict(
+                {self.filepath: [label[0] for label in self.labels.values()]})
+        else:
+            if not os.path.isdir(filepath):
+                raise Exception(
+                    f"given filepath: {filepath} is neither a directory, nor image or video of recognizeable format")
+            self.type_str = "dir"
+
+    def read_frame(self, idx):
+        "read frame by idx. only works for img-dir and video datasets"
+        if self.type_str == "vid":
+            cap = cv2.VideoCapture(self.filepath)
+            assert cap.isOpened()
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            _, bgr = cap.read()
+        elif self.type_str == "img-dir":
+            bgr = cv2.imread(
+                next(islice(iter(self.image_files), idx, idx + 1)))
+        else:
+            raise Exception("Unsupported")
+
+        return Frame(bgr, colorspace=ColorSpaces.BGR)
 
     def save(self):
         pickle.dump(self.labels, open(self.labels_filepath, 'wb'))
@@ -135,10 +172,3 @@ class DataSet():
 
     def __iter__(self):
         return DataSetIterator(self)
-
-
-class FrameLabels():
-
-    def __init__(self):
-        self.complete = False
-        self.labels = {}

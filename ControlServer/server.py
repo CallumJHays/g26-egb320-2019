@@ -50,7 +50,7 @@ async def index(req):
 
 class ControlServer(Sanic):
 
-    def __init__(self, port, video_stream, vision_system, drive_system, autobuild=False):
+    def __init__(self, port, video_stream, vision_system, drive_system, kicker_system, autobuild=False):
         super().__init__()
 
         self.blueprint(app)
@@ -62,6 +62,7 @@ class ControlServer(Sanic):
         self.video_stream = video_stream
         self.vision_system = vision_system
         self.drive_system = drive_system
+        self.kicker_system = kicker_system
 
         # eject the nextjs frontend to static files for serving
         if autobuild:
@@ -162,33 +163,45 @@ class ControlServer(Sanic):
 
     async def remote_control(self, req, ws):
         global doing_frame
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
 
         doing_frame = False
 
-        def on_new_frame(frame):
-            pass
-            # global doing_frame
+        # def on_new_frame(frame):
+        # pass
+        # global doing_frame
 
-            # if not doing_frame:
-            #     doing_frame = True
-            #     self.vision_system.update_with_frame(frame)
-            #     msg = {
-            #         name: [(det_result.coords, *bearings_distance) for det_result,
-            #                bearings_distance in zip(det_results, bearings_distances)]
-            #         for name, (det_results, bearings_distances) in self.vision_system.current_results.items()
-            #     }
-            #     loop.create_task(ws.send(json.dumps(msg)))
-            #     doing_frame = False
+        # if not doing_frame:
+        #     doing_frame = True
+        #     self.vision_system.update_with_frame(frame)
+        #     msg = {
+        #         name: [(det_result.coords, *bearings_distance) for det_result,
+        #                bearings_distance in zip(det_results, bearings_distances)]
+        #         for name, (det_results, bearings_distances) in self.vision_system.current_results.items()
+        #     }
+        #     loop.create_task(ws.send(json.dumps(msg)))
+        #     doing_frame = False
 
-        self.video_stream.new_frame_cbs.append(on_new_frame)
+        # self.video_stream.new_frame_cbs.append(on_new_frame)
 
         try:
             while True:
                 cmd_json = await ws.recv()
                 cmd = json.loads(cmd_json)
-                self.drive_system.set_desired_motion(
-                    cmd['x'], cmd['y'], cmd['omega'] / 10)
+                if cmd['act'] == 'drive':
+                    self.drive_system.set_desired_motion(
+                        cmd['x'], cmd['y'], cmd['omega'] / 10)
+                elif cmd['act'] == 'kick':
+                    if self.kicker_system.is_kicking:
+                        self.kicker_system.stop_kicking()
+                    else:
+                        self.kicker_system.start_kicking()
+                elif cmd['act'] == 'dribble':
+                    print('DRIBBLING', cmd['enable'])
+                    if cmd['enable']:
+                        self.kicker_system.start_dribbling()
+                    else:
+                        self.kicker_system.stop_dribbling()
         except:
             self.video_stream.new_frame_cbs.remove(on_new_frame)
 
@@ -213,7 +226,7 @@ if __name__ == "__main__":
         # "yellow_goal": ((0.3, 0.3, 0.1), 1)
     }
 
-    vision_system = VisionSystem(camera_pixel_width=video_stream.resolution[0], objects_to_track={
+    vision_system = VisionSystem(resolution=video_stream.resolution, objects_to_track={
         name: VisualObject(
             real_size=size,
             detection_model=ThreshBlob.load(
@@ -225,6 +238,11 @@ if __name__ == "__main__":
     try:
         from DriveSystem import DriveSystem
         drive_system = DriveSystem()
+
+        from KickerSystem import KickerSystem
+        kicker_system = KickerSystem()
+        kicker_system.setup()
+
     except ModuleNotFoundError:
         # not on the raspberry pi, just mock it
         def drive_system():
@@ -233,10 +251,18 @@ if __name__ == "__main__":
         drive_system.set_desired_motion = lambda x, y, omega: print(
             'mock drive', x, y, omega)
 
+        def kicker_system():
+            pass
+
+        kicker_system.start_kicking = lambda: None
+        kicker_system.stop_kicking = lambda: None
+        kicker_system.is_kicking = True
+
     ControlServer(
         port=8000,
         video_stream=video_stream,
         vision_system=vision_system,
         drive_system=drive_system,
+        kicker_system=kicker_system,
         autobuild=True
     ).run()

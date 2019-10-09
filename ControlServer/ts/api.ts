@@ -16,7 +16,7 @@ export class API {
   }
 
   async setDesiredMotion(x, y, omega) {
-    this.ws.send(JSON.stringify({ x, y, omega }));
+    this.ws.send(JSON.stringify({ act: "drive", x, y, omega }));
   }
 
   getLiveStreamUrl = () => _wsUrl("live_stream");
@@ -24,6 +24,16 @@ export class API {
   onVisionSystemResult(cb) {
     this.results_cbs.push(cb);
   }
+
+  kick = () => {
+    console.log("kick called");
+    this.ws.send(JSON.stringify({ act: "kick" }));
+  };
+
+  setDribbling = enable => {
+    console.log("setting dribble via api", enable);
+    this.ws.send(JSON.stringify({ act: "dribble", enable }));
+  };
 }
 
 export const useApi = ([api, setApi] = useState(null)) =>

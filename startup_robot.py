@@ -74,7 +74,7 @@ def setup_vision_system(resolution):
     ]
 
     return VisionSystem(
-        camera_pixel_width=resolution[0],
+        resolution=resolution,
         objects_to_track={
             name: VisualObject(
                 real_size=size,
@@ -88,6 +88,21 @@ def setup_vision_system(resolution):
 
 def main():
     CONTROL_SERVER_PORT = 3000
+
+    try:
+        from DriveSystem import DriveSystem
+        drive_system = DriveSystem()
+
+        from KickerSystem import KickerSystem
+        kicker_system = KickerSystem()
+        kicker_system.setup()
+    except ModuleNotFoundError:
+        # not on the raspberry pi, just mock it
+        def drive_system():
+            pass
+
+        drive_system.set_desired_motion = lambda x, y, omega: print(
+            'mock drive system driving', x, y, omega)
 
     print("Waiting for an internet connection...")
     wait_for_internet_connection()
@@ -106,25 +121,15 @@ def main():
 
     print("Launching control server...")
     try:
-        video_stream = VideoStream(downsample_scale=8)
-        vision_system = setup_vision_system(video_stream.resolution)
-
-        try:
-            from DriveSystem import DriveSystem
-            drive_system = DriveSystem()
-        except ModuleNotFoundError:
-            # not on the raspberry pi, just mock it
-            def drive_system():
-                pass
-
-            drive_system.set_desired_motion = lambda x, y, omega: print(
-                'mock drive system driving', x, y, omega)
+        # video_stream = VideoStream(downsample_scale=8)
+        # vision_system = setup_vision_system(video_stream.resolution)
 
         ControlServer(
             port=CONTROL_SERVER_PORT,
-            video_stream=video_stream,
-            vision_system=vision_system,
-            drive_system=drive_system
+            video_stream=None,
+            vision_system=None,
+            drive_system=drive_system,
+            kicker_system=kicker_system
         ).run()
     except Exception as e:
         print("Control server failed to launch with exception", e)
