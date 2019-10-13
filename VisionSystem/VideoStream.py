@@ -2,7 +2,7 @@ import cv2
 from threading import Thread, Event
 import numpy as np
 from .DetectionModel import Frame, ColorSpaces
-from time import time
+from time import time, sleep
 try:
     from picamera import PiCamera, PiResolution
     PICAMERA_MODE = True
@@ -66,6 +66,16 @@ class VideoStream():
                 print('self.resolution', self.resolution)
                 self.pi_cam = PiCamera(
                     sensor_mode=PI_CAM_SENSOR_MODE, resolution=self.resolution)
+                # Set ISO to the desired value
+                # self.pi_cam.iso = 100
+                # # Now fix the values
+                # # print('shutter_speed', )
+                # self.pi_cam.shutter_speed = self.pi_cam.exposure_speed
+                # self.pi_cam.exposure_mode = 'off'
+                # g = self.pi_cam.awb_gains
+                # self.pi_cam.awb_mode = 'off'
+                # self.pi_cam.awb_gains = g
+
             else:
                 self.cap = cv2.VideoCapture(0)
                 self.resolution = (

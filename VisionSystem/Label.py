@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod, abstractclassmethod
 
 class Label(ABC):
 
-    def __init__(self):
-        self.tags = {}
+    def __init__(self, tags=None):
+        self.tags = tags or {}
 
     @abstractmethod
     def coords_str(self):

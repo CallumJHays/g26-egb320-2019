@@ -94,6 +94,8 @@ class DataSet():
             filepath) else f'{filepath}.labels.pkl'
         if os.path.exists(self.labels_filepath):
             self.labels = pickle.load(open(self.labels_filepath, 'rb'))
+            for _, frame_labels in self.labels.items():
+                self.n_labelled += sum(frame.complete for frame in frame_labels)
         else:
             self.labels = OrderedDict()
 
@@ -120,6 +122,8 @@ class DataSet():
         self.files = OrderedDict()
 
         for item in os.listdir(self.filepath):
+            if 'labels.pkl' in item:
+                continue
             # try opening it
             filepath = os.path.join(self.filepath, item)
             dataset = DataSet(filepath)

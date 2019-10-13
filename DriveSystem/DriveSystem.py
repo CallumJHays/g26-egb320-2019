@@ -42,40 +42,65 @@ class DriveSystem(GPIO.GPIODevice):
     def set_desired_motion(self, x, y, omega):
         "Power the motors in such a way that theoretically we achieve the desired translational acceleration and rotational velocity (omega)"
         # copying http://mate.tue.nl/mate/pdfs/7566.pdf
-        DIST_WHEEL_2_CENTER = 0.09
-        WHEEL_RADIUS = 0.04
-        A1, A2, A3 = 20, 160, 270
+#         DIST_WHEEL_2_CENTER = 0.09
+#         WHEEL_RADIUS = 0.04
+#         A1, A2, A3 = 20, 160, 270
 
-        # only using local frame, therefore local-global translation angle (theta) is 0
+#         # only using local frame, therefore local-global translation angle (theta) is 0
 
-        def wheel_omega(wheel_angle):
-            radians = math.pi * wheel_angle / 180
-            return (
-                math.sin(radians) * x +
-                math.cos(radians) * y +
-                DIST_WHEEL_2_CENTER * omega
-            ) / WHEEL_RADIUS
+#         def wheel_omega(wheel_angle):
+#             radians = math.pi * wheel_angle / 180
+#             return (
+#                 math.sin(radians) * x +
+#                 math.cos(radians) * y +
+#                 DIST_WHEEL_2_CENTER * omega
+#             ) / WHEEL_RADIUS
 
-        print('set desired motion', x, y, omega)
+#         print('set desired motion', x, y, omega)
 
-        self.drive_motors(
-            wheel_omega(A1),
-            wheel_omega(A2),
-            wheel_omega(A3)
-        )
+#         self.drive_motors(
+#             wheel_omega(A1),
+#             wheel_omega(A2),
+#             wheel_omega(A3)
+#         )
+        FWD_SPEED = 80
+        ROT_SPEED = 50
+        if y != 0:
+            speedB = 0
+            speedFL = FWD_SPEED / 255
+            speedFR = -1 * (FWD_SPEED / 255)
+            if y < 0:
+                speedB = 0
+                speedFL = -1 * (FWD_SPEED / 255)
+                speedFR = (FWD_SPEED / 255)
+        elif omega != 0:
+            speedFR = ROT_SPEED / 255
+            speedFL = ROT_SPEED / 255
+            speedB = ROT_SPEED / 255
+            if omega < 0:
+                speedFR = -speedFR
+                speedFL = -speedFL
+                speedB = -speedB
+        else:
+            speedFR = 0
+            speedFL = 0
+            speedB = 0
+
+        # 40 slow
+        self.drive_motors(speedFL, speedFR, speedB)
 
     def drive_motors(self, a, b, c):
         """
         Drives the motors using PWM and toggling the enable pins
 
         """
-        abss = (abs(a), abs(b), abs(c))
-        # rescale by the maximum allowable pwm
-        if abss[0] > 1 or abss[1] > 1 or abss[2] > 1:
-            max_ = max(abss)
-            a /= max_
-            b /= max_
-            c /= max_
+#         abss = (abs(a), abs(b), abs(c))
+#         # rescale by the maximum allowable pwm
+#         if abss[0] > 1 or abss[1] > 1 or abss[2] > 1:
+#             max_ = max(abss)
+#             a /= max_
+#             b /= max_
+#             c /= max_
 
         self.FRONT_LEFT.drive(a)
         self.FRONT_RIGHT.drive(b)
