@@ -52,6 +52,32 @@ class FrameLabeller(Interactor):
         frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
         name2labels = frame_labels.labels
 
+        for type_name, opts in self.config.items():
+            if 'init' in opts and type_name not in name2labels:
+                count = opts['init']['count'] if 'count' in opts['init'] else 0
+                offset = 0.2
+                rows = int(np.sqrt(count))
+                cols = int(rows + (count / rows > rows))
+                # drunk callum programming magic ~~~
+                points = [
+                    Point((
+                        int(width * (offset + col / cols * (1 - 2 * offset))),
+                        int(height * (offset + row / rows * (1 - 2 * offset)))
+                    ))
+                    for row in range(rows)
+                    for col in range(cols)
+                ]
+            else:
+                _, points = name2labels[type_name]
+
+            if 'tags' in opts:
+                for tag_name, tag_opts in opts['tags'].items():
+                    if 'required' in tag_opts:
+                        for point in points:
+                            point.tags[tag_name] = ''
+
+                    name2labels[type_name] = (Point, points)
+
         tooltip = ipy.Box()
 
         points_mark = bq.Scatter(
@@ -130,22 +156,6 @@ class FrameLabeller(Interactor):
 
             points_mark.x, points_mark.y, colors, points_labels = [], [], [], []
             label2focus_editor_fn = {}
-
-            # fresh instance
-            if not any(name2labels):
-                # do config
-                for type_name, opts in self.config.items():
-                    for tag_name, _ in opts['tags'].items():
-
-                        # drunk callum programming magic ~~~
-                        points = [Point((width // 2 + dx, height // 2 + dy))
-                                  for dx in range(-(2 * width // 5), width // 2, width // 4)
-                                  for dy in range(-(2 * height // 5), height // 2, height // 4)]
-
-                        for point in points:
-                            point.tags[tag_name] = ''
-
-                        name2labels[type_name] = (Point, points)
 
             children = OrderedDict()
 
