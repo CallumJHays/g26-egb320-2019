@@ -18,7 +18,7 @@ class FrameLabels():
         self.labels = {}
 
 
-class BoundingBox(Label):
+class CoordsWrapper(Label):
 
     def __init__(self, coords):
         super().__init__()
@@ -28,21 +28,13 @@ class BoundingBox(Label):
         return str(self.coords)
 
 
-class Mask(Label):
-
-    def __init__(self, mask):
-        super().__init__()
-        self.mask = mask
-
-    def coords_str(self):
-        return "n/a <bitmask>"
+class BoundingBox(CoordsWrapper):
+    pass
 
 
-class Point(Label):
+class Polygon(CoordsWrapper):
+    pass
 
-    def __init__(self, coords):
-        super().__init__()
-        self.coords = coords
 
-    def coords_str(self):
-        return str(self.coords)
+class Point(CoordsWrapper):
+    pass

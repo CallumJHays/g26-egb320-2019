@@ -10,6 +10,7 @@ from .Interactor import Interactor
 from .DataSetBrowser import DataSetBrowser
 from VisionSystem.Label import Point, BoundingBox
 from VisionSystem.DetectionModel.ColorSpace import ColorSpaces
+from ..Widgets.LabelEditor import LabelEditor
 
 
 class FrameLabeller(Interactor):
@@ -31,11 +32,16 @@ class FrameLabeller(Interactor):
     def __init__(self, labels, config=None):
         self.labels = labels
         self.config = config or {}
+        self.dset_browser = None
 
     def link_with(self, display_pane):
         global curr_dset_idx, points_labels, label2focus_editor_fn
         super().link_with(display_pane)
-        width, height, _ = display_pane.raw_frame.get(ColorSpaces.BGR).shape
+        height, width, _ = display_pane.raw_frame.get(ColorSpaces.BGR).shape
+
+        for interactor in display_pane.interactors:
+            if isinstance(interactor, DataSetBrowser):
+                self.dset_browser = interactor
 
         add_label_type_button = ipy.Button(description="Add New Label Type")
 
@@ -107,10 +113,20 @@ class FrameLabeller(Interactor):
         check_complete_box = ipy.Checkbox(
             description='Mark Frame as Complete', value=frame_labels.complete, tooltip="Disabled if labels are invalid")
 
-        def on_change_labels():
+        def on_change_labels(type_idx=0, label_idx=0):
             global points_labels, label2focus_editor_fn
 
-            check_complete_box.disabled = not are_labels_valid()
+            is_valid = are_labels_valid()
+
+            if not is_valid:
+                if frame_labels.complete:
+                    check_complete_box.value = False
+                    frame_labels.complete = False
+
+                    if self.dset_browser is not None:
+                        self.dset_browser.redraw()
+
+            check_complete_box.disabled = not is_valid
 
             points_mark.x, points_mark.y, colors, points_labels = [], [], [], []
             label2focus_editor_fn = {}
@@ -265,9 +281,8 @@ class FrameLabeller(Interactor):
             frame_labels.complete = change['new']
             self.display_pane.dataset.n_labelled += 1 if frame_labels.complete else -1
 
-            for interactor in display_pane.interactors:
-                if isinstance(interactor, DataSetBrowser):
-                    interactor.redraw()
+            if self.dset_browser is not None:
+                self.dset_browser.redraw()
 
         check_complete_box.observe(on_check_complete_change, 'value')
 
@@ -281,144 +296,3 @@ class FrameLabeller(Interactor):
         self.ipy_controls.layout.width = '50%'
 
         on_change_labels()
-
-
-def LabelEditor(label):
-    return {
-        Point: PointEditor,
-        BoundingBox: BoundingBoxEditor
-    }[type(label)](label)
-
-
-class LabelEditor_(ABC):
-
-    def __init__(self, label):
-        self.label = label
-
-    @abstractmethod
-    def editor(self, display_pane, label_type_name, redraw):
-        raise NotImplementedError()
-
-    def tooltip(self):
-        return ipy.VBox([
-            ipy.Label(self.label.coords_str()),
-            ipy.GridBox([
-                ipy.Label(text, layout=ipy.Layout(
-                    border='solid 1px', margin='0', padding='2px'))
-                for tag_name, tag_val in self.label.tags.items()
-                for text in [tag_name, tag_val]
-            ],
-                layout=ipy.Layout(grid_template_columns="100px 100px"))
-        ])
-
-
-class PointEditor(LabelEditor_):
-
-    def editor(self, display_pane, label_type_name, redraw, focus):
-
-        tag_editors = []
-
-        add_tag_button = ipy.Button(description='Add Tag', icon='plus')
-
-        def on_add_tag(_):
-            desired_tag = 'new_tag'
-            desired_tag_idx = 0
-            while desired_tag in self.label.tags:
-                desired_tag_idx += 1
-                desired_tag = f'new_tag_{desired_tag_idx}'
-
-            self.label.tags[desired_tag] = ''
-            redraw()
-            focus()
-
-        add_tag_button.on_click(on_add_tag)
-
-        delete_point_button = ipy.Button(icon='trash')
-
-        def on_delete_point(_):
-            _, frame_points = display_pane.dataset.labels[
-                display_pane.dataset.filepath][display_pane.dataset_idx].labels[label_type_name]
-            if self.label not in frame_points:
-                quick_edit.children = []
-            else:
-                frame_points.remove(self.label)
-            redraw()  # cya later bois
-
-        delete_point_button.on_click(on_delete_point)
-
-        for name, tag in self.label.tags.items():
-            # need the closure
-            def loop_iter(name, tag):
-                global save_change_name_debounce, save_change_val_debounce, og_tag_name
-
-                save_change_name_debounce = None
-                og_tag_name = None
-
-                def on_change_tag_name(change):
-                    global save_change_name_debounce, og_tag_name
-                    if og_tag_name is None:
-                        og_tag_name = change['old']
-                    if save_change_name_debounce:
-                        save_change_name_debounce.cancel()
-
-                    def save_changes():
-                        global og_tag_name
-                        self.label.tags[change['new']] \
-                            = self.label.tags[og_tag_name]
-                        del self.label.tags[og_tag_name]
-                        og_tag_name = None
-                        redraw()
-                        focus()
-
-                    save_change_name_debounce = Timer(2.0, save_changes)
-                    save_change_name_debounce.start()
-
-                name_box = ipy.Text(value=name)
-                name_box.observe(on_change_tag_name, 'value')
-                name_box.layout.width = '100%'
-
-                save_change_val_debounce = None
-
-                def on_change_tag_val(change):
-                    global save_change_val_debounce
-
-                    if save_change_val_debounce:
-                        save_change_val_debounce.cancel()
-
-                    def save_changes():
-                        self.label.tags[name] = change['new']
-                        redraw()
-                        focus()
-
-                    save_change_val_debounce = Timer(2.0, save_changes)
-                    save_change_val_debounce.start()
-
-                val_box = ipy.Text(value=tag)
-                val_box.observe(on_change_tag_val, 'value')
-                val_box.layout.width = '100%'
-
-                delete_tag_button = ipy.Button(icon='trash')
-                delete_tag_button.layout.width = '100%'
-
-                def on_delete_tag(_):
-                    del self.label.tags[name]
-                    redraw()
-
-                delete_tag_button.on_click(on_delete_tag)
-
-                tag_editors.append((name_box, val_box, delete_tag_button))
-            loop_iter(name, tag)
-
-        return ipy.VBox([
-            ipy.HBox([add_tag_button, delete_point_button]),
-            ipy.GridBox(
-                [editor for name_box, val_box, del_button in tag_editors for editor in [
-                    name_box, val_box, del_button]],
-                layout=ipy.Layout(grid_template_columns="120px 120px 40px"))
-        ])
-
-
-class BoundingBoxEditor(LabelEditor_):
-
-    def editor(self, display_pane, label_type_name, redraw):
-        pass
