@@ -47,7 +47,8 @@ class FrameLabeller(Interactor):
 
         curr_dset_idx = display_pane.dataset_idx
         label_accordion = ipy.Accordion(children=[])
-        quick_edit = ipy.VBox([], layout=ipy.Layout(border='1px dashed'))
+        quick_edit = ipy.VBox([])
+        quick_fix = ipy.VBox([])
 
         frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
         name2labels = frame_labels.labels
@@ -58,7 +59,7 @@ class FrameLabeller(Interactor):
                 offset = 0.2
                 rows = int(np.sqrt(count))
                 cols = int(rows + (count / rows > rows))
-                # drunk callum programming magic ~~~
+
                 points = [
                     Point((
                         int(width * (offset + col / cols * (1 - 2 * offset))),
@@ -74,7 +75,8 @@ class FrameLabeller(Interactor):
                 for tag_name, tag_opts in opts['tags'].items():
                     if 'required' in tag_opts:
                         for point in points:
-                            point.tags[tag_name] = ''
+                            if tag_name not in point.tags:
+                                point.tags[tag_name] = ''
 
                     name2labels[type_name] = (Point, points)
 
@@ -101,50 +103,56 @@ class FrameLabeller(Interactor):
             label = points_labels[idx]
             focus_editor = label2focus_editor_fn[label]
             editor = focus_editor()
-            quick_edit.children = [
+            quick_edit.children = [ipy.VBox([
                 ipy.Label(f"Quick-Edit Point {label.coords_str()}"),
                 editor
-            ]
+            ], layout=ipy.Layout(border='1px dashed'))]
 
         points_mark.on_hover(on_point_hovered)
         points_mark.on_element_click(on_point_clicked)
 
         self.set_image_plot_marks([points_mark])
 
-        def are_labels_valid():
-            for type_name, opts in self.config.items():
-                labels_tup_or_none = name2labels.get(type_name)
-                if labels_tup_or_none is None:
-                    name2labels[type_name] = Point, []
+        def quick_fix_err(err, label):
+            quick_fix.children = [ipy.VBox([
+                ipy.Label(err),
+                LabelEditor(label).editor(
+                    display_pane, type_name, on_change_labels, label2focus_editor_fn[label], verify_labels)
+            ], layout=ipy.Layout(border='1px dashed red'))]
 
-                _, labels = name2labels[type_name]
+        def verify_labels():
+            def is_valid():
+                for type_name, opts in self.config.items():
+                    labels_tup_or_none = name2labels.get(type_name)
+                    if labels_tup_or_none is None:
+                        name2labels[type_name] = Point, []
 
-                for tag_name, tag_opts in opts['tags'].items():
-                    for label in labels:
-                        for tag_opt in tag_opts:
-                            tag = label.tags.get(tag_name)
+                    _, labels = name2labels[type_name]
 
-                            if tag_opt == 'required':
-                                if not tag:
-                                    return False
+                    for tag_name, tag_opts in opts['tags'].items():
+                        for label in labels:
+                            for tag_opt in tag_opts:
+                                tag = label.tags.get(tag_name)
 
-                            REG_TOKEN = 'regex:'
-                            if REG_TOKEN in tag_opt[:len(REG_TOKEN)]:
-                                regex = tag_opt[len(REG_TOKEN):]
-                                if not re.match(re.compile(regex), tag):
-                                    return False
+                                if tag_opt == 'required':
+                                    if not tag:
+                                        quick_fix_err(
+                                            f"Error: {tag_name} is required but no value was provided", label)
+                                        return False
 
-            return True
+                                REG_TOKEN = 'regex:'
+                                if REG_TOKEN in tag_opt[:len(REG_TOKEN)]:
+                                    regex = tag_opt[len(REG_TOKEN):]
+                                    if not re.match(re.compile(regex), tag):
+                                        quick_fix_err(
+                                            f"Error: {tag_name}: {tag} does not match regex {regex}", label)
+                                        return False
 
-        check_complete_box = ipy.Checkbox(
-            description='Mark Frame as Complete', value=frame_labels.complete, tooltip="Disabled if labels are invalid")
+                quick_fix.children = []
+                return True
 
-        def on_change_labels(type_idx=0, label_idx=0):
-            global points_labels, label2focus_editor_fn
-
-            is_valid = are_labels_valid()
-
-            if not is_valid:
+            valid = is_valid()
+            if not valid:
                 if frame_labels.complete:
                     check_complete_box.value = False
                     frame_labels.complete = False
@@ -152,7 +160,15 @@ class FrameLabeller(Interactor):
                     if self.dset_browser is not None:
                         self.dset_browser.redraw()
 
-            check_complete_box.disabled = not is_valid
+            check_complete_box.disabled = not valid
+
+        check_complete_box = ipy.Checkbox(
+            description='Mark Frame as Complete',
+            value=frame_labels.complete,
+            tooltip="Disabled if labels are invalid")
+
+        def on_change_labels(type_idx=0, label_idx=0):
+            global points_labels, label2focus_editor_fn
 
             points_mark.x, points_mark.y, colors, points_labels = [], [], [], []
             label2focus_editor_fn = {}
@@ -185,7 +201,8 @@ class FrameLabeller(Interactor):
 
                         label2focus_editor_fn[point] = focus_editor(
                             outer_idx, inner_idx)
-                    editors += [LabelEditor(label).editor(display_pane, name, on_change_labels, label2focus_editor_fn[label])
+
+                    editors += [LabelEditor(label).editor(display_pane, name, on_change_labels, label2focus_editor_fn[label], verify_labels)
                                 for label in labels]
                     acc = ipy.Accordion(children=editors)
 
@@ -207,11 +224,11 @@ class FrameLabeller(Interactor):
                         acc.set_title(idx, point.coords_str())
                         focus_editor = label2focus_editor_fn[point]
                         editor = focus_editor()
-                        quick_edit.children = [
+                        quick_edit.children = [ipy.VBox([
                             ipy.Label(
-                                f"Quick-Edit Point {point.coords_str()}"),
+                                f"Quick-Edit Point {label.coords_str()}"),
                             editor
-                        ]
+                        ], layout=ipy.Layout(border='1px dashed'))]
 
                     points_mark.on_drag_end(on_drag_end)
 
@@ -269,6 +286,9 @@ class FrameLabeller(Interactor):
             points_mark.colors = colors
 
             label_accordion.children = list(children.values())
+
+            verify_labels()
+
             for idx, name in enumerate(children):
                 label_accordion.set_title(idx, name)
 
@@ -300,7 +320,8 @@ class FrameLabeller(Interactor):
             quick_edit,
             label_accordion,
             add_label_type_button,
-            check_complete_box
+            check_complete_box,
+            quick_fix
         ])
 
         self.ipy_controls.layout.width = '50%'

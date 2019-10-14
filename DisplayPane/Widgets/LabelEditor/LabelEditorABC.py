@@ -9,10 +9,10 @@ class LabelEditorABC(ABC):
         self.label = label
 
     @abstractmethod
-    def editor(self, display_pane, label_type_name, redraw):
+    def editor(self, display_pane, label_type_name, redraw, focus, verify_labels):
         raise NotImplementedError()
 
-    def tags_editor(self, redraw, focus):
+    def tags_editor(self, redraw, focus, verify_labels):
 
         tag_editors = []
 
@@ -34,49 +34,32 @@ class LabelEditorABC(ABC):
         for name, tag in self.label.tags.items():
             # need the closure
             def loop_iter(name, tag):
-                global save_change_name_debounce, save_change_val_debounce, og_tag_name
+                global redraw_debounce
 
-                save_change_name_debounce = None
-                og_tag_name = None
+                redraw_debounce = None
 
                 def on_change_tag_name(change):
-                    global save_change_name_debounce, og_tag_name
-                    if og_tag_name is None:
-                        og_tag_name = change['old']
-                    if save_change_name_debounce:
-                        save_change_name_debounce.cancel()
+                    global redraw_debounce
+                    self.label.tags[change['new']] = \
+                        self.label.tags[change['old']]
+                    del self.label.tags[change['old']]
+                    if redraw_debounce:
+                        redraw_debounce.cancel()
 
-                    def save_changes():
-                        global og_tag_name
-                        self.label.tags[change['new']] \
-                            = self.label.tags[og_tag_name]
-                        del self.label.tags[og_tag_name]
-                        og_tag_name = None
+                    def redraw_and_focus():
                         redraw()
                         focus()
 
-                    save_change_name_debounce = Timer(2.0, save_changes)
-                    save_change_name_debounce.start()
+                    redraw_debounce = Timer(2.0, redraw_and_focus)
+                    redraw_debounce.start()
 
                 name_box = ipy.Text(value=name)
                 name_box.observe(on_change_tag_name, 'value')
                 name_box.layout.width = '100%'
 
-                save_change_val_debounce = None
-
                 def on_change_tag_val(change):
-                    global save_change_val_debounce
-
-                    if save_change_val_debounce:
-                        save_change_val_debounce.cancel()
-
-                    def save_changes():
-                        self.label.tags[name] = change['new']
-                        redraw()
-                        focus()
-
-                    save_change_val_debounce = Timer(2.0, save_changes)
-                    save_change_val_debounce.start()
+                    self.label.tags[name] = change['new']
+                    verify_labels()
 
                 val_box = ipy.Text(value=tag)
                 val_box.observe(on_change_tag_val, 'value')
