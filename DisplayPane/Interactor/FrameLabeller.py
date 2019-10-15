@@ -35,7 +35,7 @@ class FrameLabeller(Interactor):
         self.dset_browser = None
 
     def link_with(self, display_pane):
-        global curr_dset_idx, points_labels, label2focus_editor_fn
+        global curr_dset_idx, frame_labels, name2labels, label2focus_editor_fn, points_labels, label2type_name
         super().link_with(display_pane)
         height, width, _ = display_pane.raw_frame.get(ColorSpaces.BGR).shape
 
@@ -53,33 +53,6 @@ class FrameLabeller(Interactor):
         frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
         name2labels = frame_labels.labels
 
-        for type_name, opts in self.config.items():
-            if 'init' in opts and type_name not in name2labels:
-                count = opts['init']['count'] if 'count' in opts['init'] else 0
-                offset = 0.2
-                rows = int(np.sqrt(count))
-                cols = int(rows + (count / rows > rows))
-
-                points = [
-                    Point((
-                        int(width * (offset + col / cols * (1 - 2 * offset))),
-                        int(height * (offset + row / rows * (1 - 2 * offset)))
-                    ))
-                    for row in range(rows)
-                    for col in range(cols)
-                ]
-            else:
-                _, points = name2labels[type_name]
-
-            if 'tags' in opts:
-                for tag_name, tag_opts in opts['tags'].items():
-                    if 'required' in tag_opts:
-                        for point in points:
-                            if tag_name not in point.tags:
-                                point.tags[tag_name] = ''
-
-                    name2labels[type_name] = (Point, points)
-
         tooltip = ipy.Box()
 
         points_mark = bq.Scatter(
@@ -90,13 +63,21 @@ class FrameLabeller(Interactor):
         # indexes of labels in points_labels correspond with the point in the scatter-plot above
         points_labels = []
         label2focus_editor_fn = {}
+        label2type_name = {}
 
         def on_point_hovered(_, ev):
             label = points_labels[ev['data']['index']]
 
+            editor = LabelEditor(label)
+            name = label2type_name[label]
             tooltip.children = [
-                LabelEditor(label).tooltip()
+                editor.tooltip()
             ]
+            quick_edit.children = [ipy.VBox([
+                ipy.Label(f"Quick-Edit Point {label.coords_str()}"),
+                editor.editor(display_pane, name, on_change_labels,
+                              label2focus_editor_fn[label], verify_labels)
+            ], layout=ipy.Layout(border='1px dashed'))]
 
         def on_point_clicked(_, ev):
             idx = ev['data']['index']
@@ -113,31 +94,49 @@ class FrameLabeller(Interactor):
 
         self.set_image_plot_marks([points_mark])
 
-        def quick_fix_err(err, label):
+        def quick_fix_err(err, label, type_name):
+            err_label = ipy.HTML(
+                value=f'<p style="color: red; line-height: 1">{err}</p>')
+            err_label.style.color = 'red'
+            err_label.style.white_space = ''
+
             quick_fix.children = [ipy.VBox([
-                ipy.Label(err),
+                ipy.Label(f"Error with label: {label.coords_str()}"),
+                err_label,
                 LabelEditor(label).editor(
                     display_pane, type_name, on_change_labels, label2focus_editor_fn[label], verify_labels)
             ], layout=ipy.Layout(border='1px dashed red'))]
 
         def verify_labels():
             def is_valid():
+                unique_tags = {}
                 for type_name, opts in self.config.items():
                     labels_tup_or_none = name2labels.get(type_name)
+                    unique_tags[type_name] = {}
                     if labels_tup_or_none is None:
                         name2labels[type_name] = Point, []
 
                     _, labels = name2labels[type_name]
 
                     for tag_name, tag_opts in opts['tags'].items():
+                        unique_tags[type_name][tag_name] = {}
                         for label in labels:
                             for tag_opt in tag_opts:
                                 tag = label.tags.get(tag_name)
 
+                                if tag_opt == 'unique':
+                                    existing_tags = unique_tags[type_name][tag_name]
+                                    if tag and tag in existing_tags:
+                                        quick_fix_err(
+                                            f"Error: {tag_name} is expected to have a unique value, but provided '{tag}' was also used for label {existing_tags[tag]}", label, type_name)
+                                        return False
+                                    else:
+                                        existing_tags[tag] = label.coords_str()
+
                                 if tag_opt == 'required':
                                     if not tag:
                                         quick_fix_err(
-                                            f"Error: {tag_name} is required but no value was provided", label)
+                                            f"Error: {tag_name} is required but no value was provided", label, type_name)
                                         return False
 
                                 REG_TOKEN = 'regex:'
@@ -145,7 +144,7 @@ class FrameLabeller(Interactor):
                                     regex = tag_opt[len(REG_TOKEN):]
                                     if not re.match(re.compile(regex), tag):
                                         quick_fix_err(
-                                            f"Error: {tag_name}: {tag} does not match regex {regex}", label)
+                                            f"Error: {tag_name}: {tag} does not match regex {regex}", label, type_name)
                                         return False
 
                 quick_fix.children = []
@@ -168,10 +167,40 @@ class FrameLabeller(Interactor):
             tooltip="Disabled if labels are invalid")
 
         def on_change_labels(type_idx=0, label_idx=0):
-            global points_labels, label2focus_editor_fn
+            global points_labels, label2focus_editor_fn, name2labels, frame_labels, label2type_name
 
             points_mark.x, points_mark.y, colors, points_labels = [], [], [], []
-            label2focus_editor_fn = {}
+            label2focus_editor_fn, label2type_name = {}, {}
+            frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
+            name2labels = frame_labels.labels
+
+            for type_name, opts in self.config.items():
+                if 'init' in opts and type_name not in name2labels:
+                    count = opts['init']['count'] if 'count' in opts['init'] else 0
+                    offset = 0.2
+                    rows = int(np.sqrt(count))
+                    cols = int(rows + (count / rows > rows))
+
+                    points = [
+                        Point((
+                            int(width * (offset + col / cols * (1 - 2 * offset))),
+                            int(height * (offset + row / rows * (1 - 2 * offset)))
+                        ))
+                        for row in range(rows)
+                        for col in range(cols)
+                    ]
+                    name2labels[type_name] = Point, points
+                else:
+                    _, points = name2labels[type_name]
+
+            if 'tags' in opts:
+                for tag_name, tag_opts in opts['tags'].items():
+                    if 'required' in tag_opts:
+                        for point in points:
+                            if tag_name not in point.tags:
+                                point.tags[tag_name] = ''
+
+                    name2labels[type_name] = (Point, points)
 
             children = OrderedDict()
 
@@ -201,6 +230,7 @@ class FrameLabeller(Interactor):
 
                         label2focus_editor_fn[point] = focus_editor(
                             outer_idx, inner_idx)
+                        label2type_name[point] = name
 
                     editors += [LabelEditor(label).editor(display_pane, name, on_change_labels, label2focus_editor_fn[label], verify_labels)
                                 for label in labels]

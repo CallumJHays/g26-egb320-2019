@@ -7,6 +7,7 @@ from threading import Thread
 from VisionSystem.DetectionModel import Frame, ColorSpaces
 from .Interactor.ResultDisplayer import ResultDisplayer
 from .Interactor.DataSetBrowser import DataSetBrowser
+from .Interactor.FrameLabeller import FrameLabeller
 
 
 class DisplayPane(ipy.VBox):
@@ -65,7 +66,7 @@ class DisplayPane(ipy.VBox):
         self.update_data_and_display()
 
         if self.dataset is not None:
-            self.interactors.append(DataSetBrowser(self.dataset))
+            self.interactors.insert(0, DataSetBrowser(self.dataset))
 
         if self.vision_system is not None:
             self.interactors.append(ResultDisplayer())
@@ -224,7 +225,8 @@ class DisplayPane(ipy.VBox):
             interval=1000 / fps,
             max=last_frame
         )
-        slider = ipy.IntSlider(max=last_frame)
+        slider = ipy.IntSlider(max=last_frame,
+                               continuous_update=False)
         ipy.link((player, 'value'), (slider, 'value'))
 
         def on_framechange(change):
