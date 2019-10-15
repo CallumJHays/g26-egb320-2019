@@ -53,6 +53,11 @@ class FrameLabeller(Interactor):
         frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
         name2labels = frame_labels.labels
 
+        check_complete_box = ipy.Checkbox(
+            description='Mark Frame as Complete',
+            value=frame_labels.complete,
+            tooltip="Disabled if labels are invalid")
+
         tooltip = ipy.Box()
 
         points_mark = bq.Scatter(
@@ -153,7 +158,6 @@ class FrameLabeller(Interactor):
             valid = is_valid()
             if not valid:
                 if frame_labels.complete:
-                    check_complete_box.value = False
                     frame_labels.complete = False
 
                     if self.dset_browser is not None:
@@ -161,17 +165,14 @@ class FrameLabeller(Interactor):
 
             check_complete_box.disabled = not valid
 
-        check_complete_box = ipy.Checkbox(
-            description='Mark Frame as Complete',
-            value=frame_labels.complete,
-            tooltip="Disabled if labels are invalid")
-
         def on_change_labels(type_idx=0, label_idx=0):
             global points_labels, label2focus_editor_fn, name2labels, frame_labels, label2type_name
 
             points_mark.x, points_mark.y, colors, points_labels = [], [], [], []
             label2focus_editor_fn, label2type_name = {}, {}
             frame_labels = self.labels[display_pane.dataset.filepath][curr_dset_idx]
+            check_complete_box.disabled = True
+            check_complete_box.value = frame_labels.complete
             name2labels = frame_labels.labels
 
             for type_name, opts in self.config.items():
@@ -339,10 +340,12 @@ class FrameLabeller(Interactor):
 
         def on_check_complete_change(change):
             frame_labels.complete = change['new']
-            self.display_pane.dataset.n_labelled += 1 if frame_labels.complete else -1
+            if not check_complete_box.disabled:
+                # just a code change for ui purposes
+                self.display_pane.dataset.n_labelled += 1 if frame_labels.complete else -1
 
-            if self.dset_browser is not None:
-                self.dset_browser.redraw()
+                if self.dset_browser is not None:
+                    self.dset_browser.redraw()
 
         check_complete_box.observe(on_check_complete_change, 'value')
 

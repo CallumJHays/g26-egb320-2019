@@ -116,6 +116,7 @@ class DataSet():
             cap.release()
 
     def rescan_files(self):
+        print('rescan_files start', self.labels)
         if not os.path.exists(self.filepath):
             raise FileNotFoundError(self.filepath)
         self.length = 0
@@ -144,13 +145,19 @@ class DataSet():
             self.type_str = "img-dir"
             self.image_files = self.files
             self.files = OrderedDict({self.filepath: self})
-            self.labels = OrderedDict(
-                {self.filepath: [label[0] for label in self.labels.values()]})
+
+            def img_dir_label_already_exists():
+                return list(self.labels.keys()) == [self.filepath]
+
+            if not img_dir_label_already_exists():
+                self.labels = OrderedDict(
+                    {self.filepath: [label[0] for label in self.labels.values()]})
         else:
             if not os.path.isdir(filepath):
                 raise Exception(
                     f"given filepath: {filepath} is neither a directory, nor image or video of recognizeable format")
             self.type_str = "dir"
+        print('rescan_files end', self.labels)
 
     def read_frame(self, idx):
         "read frame by idx. only works for img-dir and video datasets"
