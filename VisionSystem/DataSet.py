@@ -116,7 +116,6 @@ class DataSet():
             cap.release()
 
     def rescan_files(self):
-        print('rescan_files start', self.labels)
         if not os.path.exists(self.filepath):
             raise FileNotFoundError(self.filepath)
         self.length = 0
@@ -129,10 +128,16 @@ class DataSet():
             filepath = os.path.join(self.filepath, item)
             dataset = DataSet(filepath)
             self.files[filepath] = dataset
+
             if filepath in self.labels:
                 self.n_labelled += sum(
                     label.complete for label in self.labels[filepath])
-            if filepath not in self.labels:
+            elif self.files[filepath].type_str == "img-dir":
+                dset = self.files[filepath]
+                for filepath in dset.image_files:
+                    self.n_labelled += sum(
+                        label.complete for label in self.labels[filepath])
+            else:
                 # instantiate an empty framelabels object for each example in the dataset
                 self.labels[filepath] = [FrameLabels()
                                          for _ in range(len(dataset))]
@@ -145,19 +150,13 @@ class DataSet():
             self.type_str = "img-dir"
             self.image_files = self.files
             self.files = OrderedDict({self.filepath: self})
-
-            def img_dir_label_already_exists():
-                return list(self.labels.keys()) == [self.filepath]
-
-            if not img_dir_label_already_exists():
-                self.labels = OrderedDict(
-                    {self.filepath: [label[0] for label in self.labels.values()]})
+            self.labels = OrderedDict(
+                {self.filepath: self.labels[self.filepath]})
         else:
-            if not os.path.isdir(filepath):
+            if not os.path.isdir(self.filepath):
                 raise Exception(
-                    f"given filepath: {filepath} is neither a directory, nor image or video of recognizeable format")
+                    f"given filepath: {self.filepath} is neither a directory, nor image or video of recognizeable format")
             self.type_str = "dir"
-        print('rescan_files end', self.labels)
 
     def read_frame(self, idx):
         "read frame by idx. only works for img-dir and video datasets"
@@ -169,7 +168,7 @@ class DataSet():
             _, bgr = cap.read()
         elif self.type_str == "img-dir":
             bgr = cv2.imread(
-                next(islice(iter(self.image_files), idx, idx + 1)))
+                next(islice(self.image_files.keys(), idx, idx + 1)))
         else:
             raise Exception("Unsupported")
 

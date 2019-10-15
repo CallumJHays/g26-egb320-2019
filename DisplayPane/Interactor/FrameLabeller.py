@@ -177,6 +177,7 @@ class FrameLabeller(Interactor):
 
             for type_name, opts in self.config.items():
                 if 'init' in opts and type_name not in name2labels:
+                    print('running init code?')
                     count = opts['init']['count'] if 'count' in opts['init'] else 0
                     offset = 0.2
                     rows = int(np.sqrt(count))
