@@ -195,14 +195,14 @@ class FrameLabeller(Interactor):
                 else:
                     _, points = name2labels[type_name]
 
-            if 'tags' in opts:
-                for tag_name, tag_opts in opts['tags'].items():
-                    if 'required' in tag_opts:
-                        for point in points:
-                            if tag_name not in point.tags:
-                                point.tags[tag_name] = ''
+                if 'tags' in opts:
+                    for tag_name, tag_opts in opts['tags'].items():
+                        if 'required' in tag_opts:
+                            for point in points:
+                                if tag_name not in point.tags:
+                                    point.tags[tag_name] = ''
 
-                    name2labels[type_name] = (Point, points)
+                        name2labels[type_name] = (Point, points)
 
             children = OrderedDict()
 

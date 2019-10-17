@@ -68,6 +68,9 @@ class DisplayPane(ipy.VBox):
         if self.dataset is not None:
             self.interactors.insert(0, DataSetBrowser(self.dataset))
 
+            if not any(isinstance(inter, FrameLabeller) for inter in self.interactors):
+                self.interactors.append(FrameLabeller(self.dataset.labels))
+
         if self.vision_system is not None:
             self.interactors.append(ResultDisplayer())
 

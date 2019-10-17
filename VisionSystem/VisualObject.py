@@ -39,33 +39,38 @@ class VisualObject():
             self.detection_results, key=lambda result: -result.area())
         if self.result_limit is not None:
             self.detection_results = self.detection_results[0:self.result_limit]
-        self.bearings_distances = []
 
-        real_x, real_y, _real_z = self.real_size
+        real_x, real_y, real_z = self.real_size
         avg_real_width = (real_x + real_y) / 2
 
         for result in self.detection_results:
-            ((x1, y1), (x2, y2)) = result.coords
-            x, y = (x1 + x2) / 2, (y1 + y2) / 2
+            if len(result.coords) == 2:
+                ((x1, y1), (x2, y2)) = result.coords
+                x, y = (x1 + x2) / 2, (y1 + y2) / 2
 
-            x = x / self.resolution[0] - 0.5
-            y = y / self.resolution[1] - 0.5
-            # front-facing cam
-            # bearing = ((x1 + x2) / 2 / self.resolution[0] - 0.5) \
-            #     * self.CAMERA_FOV + self.FORWARD_DIRECTION
+                x = x / self.resolution[0] - 0.5
+                y = y / self.resolution[1] - 0.5
+                # front-facing cam
+                # bearing = ((x1 + x2) / 2 / self.resolution[0] - 0.5) \
+                #     * self.CAMERA_FOV + self.FORWARD_DIRECTION
 
-            # omni-cam
-            bearing = math.atan2(y, x)
-            pixel_width = x2 - x1
-            pixel_height = y2 - y1
+                # omni-cam
+                bearing = math.atan2(y, x)
+                pixel_width = x2 - x1
+                pixel_height = y2 - y1
 
-            # get the most likely distance as the biggest one between the width and height,
-            # so that if half of the mask is blocked - it has less of an effect
-            distance = self.FOCAL_CONSTANT * max(
-                self.real_size[2] / pixel_height if pixel_height > 0 else 0,
-                avg_real_width / pixel_width if pixel_width > 0 else 0
-            )
+                # get the most likely distance as the biggest one between the width and height,
+                # so that if half of the mask is blocked - it has less of an effect
+                distance = self.FOCAL_CONSTANT * max(
+                    real_z / pixel_height if pixel_height > 0 else 0,
+                    avg_real_width / pixel_width if pixel_width > 0 else 0
+                )
 
-            self.bearings_distances.append((bearing, distance))
+                self.bearings_distances.append((bearing, distance))
+            elif len(result.coords) == 4:  # TODO: redo this especially WTF
+                self.bearings_distances.append(
+                    (result.bearing, result.distance + avg_real_width))
+            else:
+                raise Exception("result type not supported")
 
         return self.detection_results, self.bearings_distances

@@ -41,17 +41,29 @@ class ResultDisplayer(Interactor):
                     self.name2color[name] = color
 
                 for idx, (result, (bearing, distance)) in enumerate(zip(detection_results, bearings_distances)):
-                    ((x1, y1), (x2, y2)) = result.coords
-                    x1 /= width
-                    x2 /= width
-                    y1 = 1 - y1 / height
-                    y2 = 1 - y2 / height
-                    boxes_x.append([x1, x1, x2, x2])
-                    boxes_y.append([y1, y2, y2, y1])
+                    if len(result.coords) == 2:
+                        ((x1, y1), (x2, y2)) = result.coords
+                        x1 /= width
+                        x2 /= width
+                        y1 = 1 - y1 / height
+                        y2 = 1 - y2 / height
+                        boxes_x.append([x1, x1, x2, x2])
+                        boxes_y.append([y1, y2, y2, y1])
+                        labels_x.append(x1)
+                        labels_y.append(y1 - 0.05)
+                    elif len(result.coords) > 2:
+                        xs, ys = zip(*list(result.coords))
+
+                        x = np.array([x / width for x in xs])
+                        y = np.array([1 - y / height for y in ys])
+
+                        boxes_x.append(x)
+                        boxes_y.append(y)
+                        labels_x.append(x[0])
+                        labels_y.append(y[0] - 0.05)
+
                     # format colour as hex
                     colors.append('#%02x%02x%02x' % color)
-                    labels_x.append(x1)
-                    labels_y.append(y1 - 0.05)
                     labels_text.append(
                         f'{name}{idx}: {round(distance * 100)}@{round(math.degrees(bearing))}')
 

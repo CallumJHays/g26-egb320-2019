@@ -4,6 +4,17 @@ from .Thresholder import Thresholder
 import cv2
 import pickle
 import numpy as np
+from numpy import *
+
+# point of the center of the camera in the image
+CX, CY = (637, 639)
+
+
+def convert_img_dist_to_real_dist(img_dist):
+    RESCALE = 1e2
+    DIST_PER_POINT = 0.1  # 10 cm per square
+
+    return (0.1407675 * np.exp(0.85425173 * img_dist / RESCALE) + 0.79365708) * DIST_PER_POINT
 
 
 class ThreshBlob(DetectionModel):
@@ -51,47 +62,87 @@ class ThreshBlob(DetectionModel):
 
             # detect contours to find the true bounding rect
             contour_padding = int(keypoint.size * 0.75)
-            roi = (
-                (max(y - contour_padding, 0), min(y + contour_padding, height)),
-                (max(x - contour_padding, 0), min(x + contour_padding, width))
+            (roi_x1, roi_y1), (roi_x2, roi_y2) = (
+                (max(x - contour_padding, 0), max(y - contour_padding, 0)),
+                (min(x + contour_padding, width), min(y + contour_padding, height))
             )
+
             _, contours, _ = cv2.findContours(
-                mask[roi[0][0]:roi[0][1], roi[1][0]:roi[1][1]].copy(),
+                mask[roi_y1:roi_y2, roi_x1:roi_x2].copy(),
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE
             )
+            theta = arctan2(y - CY, x - CX)
+            img_dist, ((x1, y1), (x2, y2), (x3, y3), (x4, y4)) =\
+                find_radial_bounding_box(contours, theta, (roi_x1, roi_y1))
 
-            (x1, y1), (x2, y2) = find_bounding_box(contours)
+            coords = \
+                (int(x1 + CX), int(y1 + CY)),\
+                (int(x2 + CX), int(y2 + CY)),\
+                (int(x3 + CX), int(y3 + CY)),\
+                (int(x4 + CX), int(y4 + CY))
 
-            # restore the offsets invoked by ROI-based contour detection
-            x1 += roi[1][0]
-            x2 += roi[1][0]
-            y1 += roi[0][0]
-            y2 += roi[0][0]
-
-            results.append(DetectionResult(
-                coords=((int(x1), int(y1)), (int(x2), int(y2))),
+            result = DetectionResult(
+                coords=coords,
                 bitmask=mask
-            ))
+            )
+            result.bearing = -theta  # ??? But it works!!!! DOn't TOUCH IT!!!
+            result.distance = convert_img_dist_to_real_dist(img_dist)
+            results.append(result)
 
         return results
 
 
-def find_bounding_box(contours):
-    # find the rectangle that includes all points in the contour
-    x1, y1 = 99999999, 999999999
-    x2, y2 = -99999999, -999999999
+def find_radial_bounding_box(contours, theta, roi_offset):
+    rx, ry = roi_offset
+
+    min_dist_1, min_dist_2 = 99999999, 999999999
+    max_dist_1, max_dist_2 = -99999999, -999999999
 
     for contour in contours:
-        for [[cx, cy]] in contour:
-            if x1 > cx:
-                x1 = cx
-            elif x2 < cx:
-                x2 = cx
+        for [[x, y]] in contour:
+            # relative to camera point (0, 0)
+            x += rx - CX
+            y += ry - CY
 
-            if y1 > cy:
-                y1 = cy
-            elif y2 < cy:
-                y2 = cy
+            # okay so how this algorithm works is best explained by
+            # a geometry picture which i will put in the report
+            a = sqrt(pow(x, 2) + pow(y, 2))
+            phi = arctan2(y, x) - theta
 
-    return (x1, y1), (x2, y2)
+            dist_1 = a * cos(phi)
+            dist_2 = a * tan(phi)
+
+            if dist_1 > max_dist_1:
+                max_dist_1 = dist_1
+            elif dist_1 < min_dist_1:
+                min_dist_1 = dist_1
+
+            if dist_2 > max_dist_2:
+                max_dist_2 = dist_2
+            elif dist_2 < min_dist_2:
+                min_dist_2 = dist_2
+
+    # G E O M E T R Y
+    dirx, diry = cos(theta), sin(theta)
+    rect_inner_midpoint = (min_dist_1 * dirx), (min_dist_1 * diry)
+    mx, my = rect_inner_midpoint
+
+    d90 = pi / 2
+
+    left_x, right_x = abs(min_dist_2) * cos(theta +
+                                            d90), max_dist_2 * cos(theta - d90)
+    left_y, right_y = abs(min_dist_2) * sin(theta +
+                                            d90), max_dist_2 * sin(theta - d90)
+
+    bottom_left_corner = (mx + left_x), (my + left_y)
+    bottom_right_corner = (mx + right_x), (my + right_y)
+
+    rect_outer_midpoint = (max_dist_1 * dirx), (max_dist_1 * diry)
+    mx, my = rect_outer_midpoint
+
+    top_left_corner = (mx + left_x), (my + left_y)
+    top_right_corner = (mx + right_x), (my + right_y)
+
+    # uhhuh
+    return min_dist_1, (top_left_corner, top_right_corner, bottom_right_corner, bottom_left_corner)

@@ -64,7 +64,7 @@ class DriveSystem(GPIO.GPIODevice):
 #             wheel_omega(A3)
 #         )
         FWD_SPEED = 80
-        ROT_SPEED = 50
+        ROT_SPEED = 40
         if y != 0:
             speedB = 0
             speedFL = FWD_SPEED / 255

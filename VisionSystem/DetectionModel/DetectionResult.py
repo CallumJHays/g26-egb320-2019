@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class DetectionResult():
 
     # rectangular bounds of detected object.
@@ -15,5 +18,12 @@ class DetectionResult():
         self.bitmask = bitmask
 
     def area(self):
-        ((x1, y1), (x2, y2)) = self.coords
-        return int((x2 - x1)) * int((y2 - y1))
+        if len(self.coords) == 2:
+            ((x1, y1), (x2, y2)) = self.coords
+            return int((x2 - x1)) * int((y2 - y1))
+        else:
+            x, y = zip(*list(self.coords))
+            x, y = np.array(x), np.array(y)
+            # "shoelace" algorithm by Mahdi
+            # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+            return 0.5*np.abs(np.dot(x, np.roll(y, 1))-np.dot(y, np.roll(x, 1)))

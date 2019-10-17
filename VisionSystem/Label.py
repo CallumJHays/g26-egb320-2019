@@ -13,9 +13,9 @@ class Label(ABC):
 
 class FrameLabels():
 
-    def __init__(self):
+    def __init__(self, labels=None):
         self.complete = False
-        self.labels = {}
+        self.labels = labels or {}
 
 
 class CoordsWrapper(Label):
