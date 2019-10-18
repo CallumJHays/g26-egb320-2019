@@ -69,7 +69,7 @@ class VisualObject():
                 self.bearings_distances.append((bearing, distance))
             elif len(result.coords) == 4:  # TODO: redo this especially WTF
                 self.bearings_distances.append(
-                    (result.bearing, result.distance + avg_real_width))
+                    (result.bearing, result.distance + avg_real_width / 2))
             else:
                 raise Exception("result type not supported")
 

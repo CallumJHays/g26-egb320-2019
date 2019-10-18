@@ -1,9 +1,13 @@
 import styled, { css } from "styled-components";
-import { useEffect, createRef, useState, Fragment } from "react";
+import { useEffect, Dispatch, useState, Fragment, SetStateAction } from "react";
 import { useApi } from "../api";
 import WSAvcPlayer from "ws-avc-player";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExpand } from "@fortawesome/free-solid-svg-icons";
+import {
+  faExpand,
+  faPlayCircle,
+  faStopCircle
+} from "@fortawesome/free-solid-svg-icons";
 import { Stage, Layer, Rect, Text } from "react-konva";
 import useResizeObserver from "use-resize-observer";
 
@@ -51,6 +55,17 @@ const FullscreenButton = styled.button`
   z-index: 20;
 `;
 
+const RecordButton = styled.button`
+  position: absolute;
+  top: 5px;
+  right: 0;
+  background-color: transparent;
+  border: none;
+  color: red;
+  cursor: pointer;
+  z-index: 20;
+`;
+
 const LiveStreamErrorMessage = styled.p`
   position: absolute;
   bottom: 0;
@@ -84,6 +99,17 @@ const linkPlayer = (
   return { reactRef, width, height, streamResolution };
 };
 
+const linkRecorder = (
+  api,
+  [recording, setRecording] = useState(false)
+): [boolean, Dispatch<SetStateAction<boolean>>] => [
+  recording,
+  (recording: boolean) => {
+    api.setRecording(recording);
+    setRecording(recording);
+  }
+];
+
 const linkVisionSystem = (
   api,
   [visionResults, setVisionResults] = useState(null)
@@ -98,12 +124,21 @@ const LiveStream = ({
     api
   ) as any,
   _visionState: visionResults = linkVisionSystem(api),
-  _fullscreenState: [fullscreen, setFullscreen] = useState(false)
+  _fullscreenState: [fullscreen, setFullscreen] = useState(false),
+  _recordingState: [recording, setRecording] = linkRecorder(api)
 }) => (
   <LiveStreamContainer fullscreen={fullscreen}>
     <FullscreenButton onClick={() => setFullscreen(!fullscreen)}>
       <FontAwesomeIcon icon={faExpand} />
     </FullscreenButton>
+    <RecordButton onClick={() => setRecording(!recording)}>
+      {recording ? (
+        <FontAwesomeIcon icon={faStopCircle} />
+      ) : (
+        <FontAwesomeIcon icon={faPlayCircle} />
+      )}{" "}
+      <span style={{ color: "white" }}>REC</span>
+    </RecordButton>
 
     {streamResolution ? (
       ((ctr = 0) => (

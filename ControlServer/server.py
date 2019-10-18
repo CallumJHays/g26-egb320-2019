@@ -22,9 +22,11 @@ from concurrent.futures import TimeoutError
 import select
 
 try:
-    from VisionSystem.DetectionModel import ColorSpaces
+    from VisionSystem import ColorSpaces
 except:
-    pass
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from VisionSystem import ColorSpaces
 
 
 SERVER_BASE_DIR = Path(__file__).parents[0].absolute()
@@ -63,6 +65,7 @@ class ControlServer(Sanic):
         self.vision_system = vision_system
         self.drive_system = drive_system
         self.kicker_system = kicker_system
+        self.recording = False
 
         # eject the nextjs frontend to static files for serving
         if autobuild:
@@ -91,9 +94,6 @@ class ControlServer(Sanic):
             'action': 'stream_active',
             'payload': True
         }))
-
-        def random_string(length): return ''.join(
-            random.choice(string.ascii_lowercase) for _ in range(length))
 
         # create linux-only named FIFO pipes (pipes that dont send an EOF) as live-input mechanism for ffmpeg subprocess
         jpeg_input_fifo_path = f'/tmp/{random_string(10)}.fifo'
@@ -197,16 +197,72 @@ class ControlServer(Sanic):
                     else:
                         self.kicker_system.start_kicking()
                 elif cmd['act'] == 'dribble':
-                    print('DRIBBLING', cmd['enable'])
                     if cmd['enable']:
                         self.kicker_system.start_dribbling()
                     else:
                         self.kicker_system.stop_dribbling()
+                elif cmd['act'] == 'set_recording':
+                    self.set_recording(cmd['recording'])
+                else:
+                    print('unknown command recieved', cmd)
+
         except:
-            self.video_stream.new_frame_cbs.remove(on_new_frame)
+            self.recording = False
+            pass
+            # self.video_stream.new_frame_cbs.remove(on_new_frame)
+
+    def set_recording(self, recording):
+        RECORDINGS_DIR = '../data/recordings'
+        try:
+            os.makedirs(RECORDINGS_DIR)
+        except:
+            pass
+
+        dset_idx = 0
+
+        if recording and not self.recording:
+            filepath = f'{RECORDINGS_DIR}/{dset_idx}.mp4'
+            while(os.path.exists(filepath)):
+                dset_idx += 1
+                filepath = f'{RECORDINGS_DIR}/{dset_idx}.mp4'
+
+            Thread(target=self.record, args=[filepath]).start()
+
+        self.recording = recording
+
+    def record(self, filepath):
+        jpeg_input_fifo_path = f'/tmp/{random_string(10)}.fifo'
+        os.mkfifo(jpeg_input_fifo_path)
+        jpeg_fd = os.open(jpeg_input_fifo_path, os.O_RDWR)
+        vid_width, vid_height = self.video_stream.resolution
+
+        # once this file is closed by this process (at the end of the with block)
+        # the ffmpeg process will stop
+        with os.fdopen(jpeg_fd, 'wb') as input_mpeg_stream:
+            # run ffmpeg until we close the fifo
+            subprocess.Popen(FFmpeg(
+                # executable="/home/cal/berryconda3/bin/ffmpeg",
+                global_options=['-y'],
+                inputs={
+                    jpeg_input_fifo_path: '-f image2pipe -vcodec mjpeg'},
+                outputs={
+                    filepath: f'-c:v h264 -f mp4 -s:v {vid_width}x{vid_height}'}
+            ).cmd, shell=True)
+
+            for frame in self.video_stream:
+                if not self.recording:
+                    break
+                bgr = frame.get(ColorSpaces.BGR)
+                jpeg = cv2.imencode('.jpg', bgr)[1].tobytes()
+
+                input_mpeg_stream.write(jpeg)
 
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs, host='0.0.0.0', port=self.port)
+
+
+def random_string(length): return ''.join(
+    random.choice(string.ascii_lowercase) for _ in range(length))
 
 
 if __name__ == "__main__":
@@ -216,7 +272,7 @@ if __name__ == "__main__":
     from VisionSystem import VideoStream, VisionSystem, VisualObject
 
     # use any available live feed device such as a webcam
-    video_stream = VideoStream(downsample_scale=8)
+    video_stream = VideoStream(downsample_scale=8, crop=((0.13, 0), (.9, 1)))
 
     objects_to_size_and_result_limit = {
         "ball": ((0.043, 0.043, 0.043), 1),
@@ -264,5 +320,5 @@ if __name__ == "__main__":
         vision_system=vision_system,
         drive_system=drive_system,
         kicker_system=kicker_system,
-        autobuild=True
+        autobuild=False
     ).run()

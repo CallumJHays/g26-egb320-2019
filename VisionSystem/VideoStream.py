@@ -89,7 +89,9 @@ class VideoStream():
             self.started = False
             self.stopped = False
 
-        if crop is not None:
+        if crop is None:
+            self.resolution = self.raw_resolution
+        else:
             x, y = self.raw_resolution
             ((x1, y1), (x2, y2)) = crop
             self.resolution = int(x2 * x) - int(x1 * x), \

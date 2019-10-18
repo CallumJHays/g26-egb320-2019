@@ -34,18 +34,25 @@ export class API {
     console.log("setting dribble via api", enable);
     this.ws.send(JSON.stringify({ act: "dribble", enable }));
   };
+
+  setRecording = recording => {
+    this.ws.send(JSON.stringify({ act: "set_recording", recording }));
+  };
 }
 
 export const useApi = ([api, setApi] = useState(null)) =>
   api
     ? api
     : (() => {
-        const ws = new WebSocket(_wsUrl("remote_control"));
+        const ws = new WebSocket(_wsUrl("ws://localhost:8000/remote_control"));
         ws.onopen = _event => setApi(new API(ws));
       })();
 
 const _wsUrl = uri => {
-  const url = new URL(`/${uri}`, window.location.href);
+  const url =
+    uri.indexOf("ws://") !== -1
+      ? new URL(uri)
+      : new URL(`/${uri}`, window.location.href);
   url.protocol = url.protocol.replace("http", "ws");
   return url.href;
 };
