@@ -190,7 +190,7 @@ class ControlServer(Sanic):
                 cmd = json.loads(cmd_json)
                 if cmd['act'] == 'drive':
                     self.drive_system.set_desired_motion(
-                        cmd['x'], cmd['y'], cmd['omega'] / 10)
+                        cmd['x'], cmd['y'], cmd['omega'] / 3)
                 elif cmd['act'] == 'kick':
                     if self.kicker_system.is_kicking:
                         self.kicker_system.stop_kicking()
@@ -212,7 +212,7 @@ class ControlServer(Sanic):
             # self.video_stream.new_frame_cbs.remove(on_new_frame)
 
     def set_recording(self, recording):
-        RECORDINGS_DIR = '../data/recordings'
+        RECORDINGS_DIR = './data/recordings'
         try:
             os.makedirs(RECORDINGS_DIR)
         except:
@@ -246,7 +246,7 @@ class ControlServer(Sanic):
                 inputs={
                     jpeg_input_fifo_path: '-f image2pipe -vcodec mjpeg'},
                 outputs={
-                    filepath: f'-c:v h264 -f mp4 -s:v {vid_width}x{vid_height}'}
+                    filepath: f'-c:v h264 -f mp4 -s:v {vid_width + vid_width % 2}x{vid_height + vid_height % 2}'}
             ).cmd, shell=True)
 
             for frame in self.video_stream:
@@ -320,5 +320,5 @@ if __name__ == "__main__":
         vision_system=vision_system,
         drive_system=drive_system,
         kicker_system=kicker_system,
-        autobuild=False
+        autobuild=True
     ).run()

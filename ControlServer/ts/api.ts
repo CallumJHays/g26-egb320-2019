@@ -44,7 +44,7 @@ export const useApi = ([api, setApi] = useState(null)) =>
   api
     ? api
     : (() => {
-        const ws = new WebSocket(_wsUrl("ws://localhost:8000/remote_control"));
+        const ws = new WebSocket(_wsUrl("remote_control"));
         ws.onopen = _event => setApi(new API(ws));
       })();
 

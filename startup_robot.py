@@ -104,32 +104,34 @@ def main():
         drive_system.set_desired_motion = lambda x, y, omega: print(
             'mock drive system driving', x, y, omega)
 
-    print("Waiting for an internet connection...")
-    wait_for_internet_connection()
+    # print("Waiting for an internet connection...")
+    # wait_for_internet_connection()
 
-    print("Setting up an ngrok tunnel to the control server")
-    # public_ssh_url = ngrok.connect(22, 'tcp')
-    control_server_url = ngrok.connect(CONTROL_SERVER_PORT, 'http')
+    # print("Setting up an ngrok tunnel to the control server")
+    # # public_ssh_url = ngrok.connect(22, 'tcp')
+    # control_server_url = ngrok.connect(CONTROL_SERVER_PORT, 'http')
 
-    # print("ngrok public ssh url:", public_ssh_url)
-    print("ngrok public control-server url:", control_server_url)
+    # # print("ngrok public ssh url:", public_ssh_url)
+    # print("ngrok public control-server url:", control_server_url)
 
-    lan_ip = get_lan_ip()
-    print("local ip:", lan_ip)
+    # lan_ip = get_lan_ip()
+    # print("local ip:", lan_ip)
 
-    send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
+    # send_email(control_server_url, lan_ip, CONTROL_SERVER_PORT)
 
     print("Launching control server...")
     try:
-        # video_stream = VideoStream(downsample_scale=8)
-        # vision_system = setup_vision_system(video_stream.resolution)
+        video_stream = VideoStream(
+            downsample_scale=5, crop=((0.13, 0), (.9, 1)))
+        vision_system = setup_vision_system(video_stream.resolution)
 
         ControlServer(
             port=CONTROL_SERVER_PORT,
-            video_stream=None,
-            vision_system=None,
+            video_stream=video_stream,
+            vision_system=vision_system,
             drive_system=drive_system,
-            kicker_system=kicker_system
+            kicker_system=kicker_system,
+            autobuild=False
         ).run()
     except Exception as e:
         print("Control server failed to launch with exception", e)

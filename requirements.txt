@@ -8,3 +8,6 @@ bqplot==0.11.6
 picamera==1.13
 aiofile==1.5.2
 ffmpy3==0.2.3 # needs a monkey patch to allow correct input streaming
+mpu6050-raspberrypi==1.1
+smbus2==0.3.0
+scikit-kinematics==0.8.3

@@ -86,7 +86,7 @@ class ThreshBlob(DetectionModel):
                 coords=coords,
                 bitmask=mask
             )
-            result.bearing = -theta  # ??? But it works!!!! DOn't TOUCH IT!!!
+            result.bearing = theta  # ??? But it works!!!! DOn't TOUCH IT!!!
             result.distance = convert_img_dist_to_real_dist(img_dist)
             results.append(result)
 

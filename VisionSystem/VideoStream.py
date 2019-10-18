@@ -68,7 +68,7 @@ class VideoStream():
 
                 # TODO: make this config visible to this stream's constructor and as default values
                 self.pi_cam.iso = 100
-                self.shutter_speed = 10000
+                self.shutter_speed = 8000
                 self.exposure_mode = 'off'
                 self.awb_mode = 'off'
                 self.pi_cam.awb_gains = (2.0, 1.5)
