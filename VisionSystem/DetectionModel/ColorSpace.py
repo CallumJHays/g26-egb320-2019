@@ -47,7 +47,7 @@ class ColorSpaces(Enum):
     ])
 
     HSV = ColorSpace("HSV", cv2.COLOR_BGR2HSV, [
-        ('Hue', (-180, 180)),
+        ('Hue', (-255, 255)),
         ('Saturation', (0, 255)),
         ('Value', (0, 255))
     ])

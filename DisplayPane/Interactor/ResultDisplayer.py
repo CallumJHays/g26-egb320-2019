@@ -36,8 +36,8 @@ class ResultDisplayer(Interactor):
                 if name in self.name2color:
                     color = self.name2color[name]
                 else:
-                    color = display_pane.vision_system.CATEGORICAL_COLORS[len(
-                        self.name2color)]
+                    color = display_pane.vision_system\
+                        .CATEGORICAL_COLORS[len(self.name2color)]
                     self.name2color[name] = color
 
                 for idx, (result, (bearing, distance)) in enumerate(zip(detection_results, bearings_distances)):

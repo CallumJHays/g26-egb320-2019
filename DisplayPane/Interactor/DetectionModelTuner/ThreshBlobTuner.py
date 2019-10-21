@@ -45,7 +45,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
         for idx in range(len(thresh.lower)):
 
             minVal, maxVal = thresh.colorspace.valRange(idx)
-
+            
             slider = ipy.IntRangeSlider(
                 description=thresh.colorspace.channel_labels[idx],
                 value=(thresh.lower[idx], thresh.upper[idx]),

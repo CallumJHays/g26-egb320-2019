@@ -41,6 +41,9 @@ class DriveSystem(GPIO.GPIODevice):
 
     def set_desired_motion(self, x, y, omega):
         "Power the motors in such a way that theoretically we achieve the desired translational acceleration and rotational velocity (omega)"
+        R_SPEED = 0.1
+        T_SPEED = 0.05
+
         # copying http://mate.tue.nl/mate/pdfs/7566.pdf
         DIST_WHEEL_2_CENTER = 0.09
         WHEEL_RADIUS = 0.04
@@ -51,12 +54,10 @@ class DriveSystem(GPIO.GPIODevice):
         def wheel_omega(wheel_angle):
             radians = math.pi * wheel_angle / 180
             return (
-                math.sin(radians) * x +
-                math.cos(radians) * y +
-                DIST_WHEEL_2_CENTER * omega
+                math.sin(radians) * x * T_SPEED +
+                math.cos(radians) * y * T_SPEED +
+                DIST_WHEEL_2_CENTER * omega * R_SPEED
             ) / WHEEL_RADIUS
-
-        print('set desired motion', x, y, omega)
 
         self.drive_motors(
             wheel_omega(A1),
@@ -69,15 +70,29 @@ class DriveSystem(GPIO.GPIODevice):
         Drives the motors using PWM and toggling the enable pins
 
         """
-        abss = (abs(a), abs(b), abs(c))
-        # rescale by the maximum allowable pwm
-        if abss[0] > 1 or abss[1] > 1 or abss[2] > 1:
-            max_ = max(abss)
+        Vs = 1  # self.Vs
+        Mx_Motor = 10  # self.Speed
+        thresh = 3  # self.Thresh
+        floor = thresh / (Mx_Motor / Vs)
+        motMIN = max(0.0000000000000000001, a, b, c)
+        if thresh > motMIN:
+            factor = motMIN
+        else:
+            factor = floor
+
+        adjust = min(Mx_Motor / Vs, floor / factor)
+
+        a *= adjust
+        b *= adjust
+        c *= adjust
+
+        ab_abc = (abs(a), abs(b), abs(c))
+        # rescale by the maximum allowable pwm (1)
+        if ab_abc[0] > 1 or ab_abc[1] > 1 or ab_abc[2] > 1:
+            max_ = max(ab_abc)
             a /= max_
             b /= max_
             c /= max_
-
-        print('driving left, right, back', a, b, c)
 
         self.FRONT_LEFT.drive(a)
         self.FRONT_RIGHT.drive(b)

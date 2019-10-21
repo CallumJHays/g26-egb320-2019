@@ -52,7 +52,7 @@ async def index(req):
 
 class ControlServer(Sanic):
 
-    def __init__(self, port, video_stream, vision_system, drive_system, kicker_system, autobuild=False):
+    def __init__(self, port, drive_system, kicker_system, video_stream=None, vision_system=None, autobuild=False):
         super().__init__()
 
         self.blueprint(app)
@@ -272,24 +272,24 @@ if __name__ == "__main__":
     from VisionSystem import VideoStream, VisionSystem, VisualObject
 
     # use any available live feed device such as a webcam
-    video_stream = VideoStream(downsample_scale=8, crop=((0.13, 0), (.9, 1)))
+#     video_stream = VideoStream(downsample_scale=8, crop=((0.13, 0), (.9, 1)))
 
-    objects_to_size_and_result_limit = {
-        "ball": ((0.043, 0.043, 0.043), 1),
-        "obstacle": ((0.18, 0.18, 0.2), None),
-        # 30 centimetres long, 10 cm high? i guess
-        # "blue_goal": ((0.3, 0.3, 0.1), 1),
-        # "yellow_goal": ((0.3, 0.3, 0.1), 1)
-    }
+#     objects_to_size_and_result_limit = {
+#         "ball": ((0.043, 0.043, 0.043), 1),
+#         "obstacle": ((0.18, 0.18, 0.2), None),
+#         # 30 centimetres long, 10 cm high? i guess
+#         # "blue_goal": ((0.3, 0.3, 0.1), 1),
+#         # "yellow_goal": ((0.3, 0.3, 0.1), 1)
+#     }
 
-    vision_system = VisionSystem(resolution=video_stream.resolution, objects_to_track={
-        name: VisualObject(
-            real_size=size,
-            detection_model=ThreshBlob.load(
-                relpath("..", "models", f"{name}.threshblob.pkl")),
-            result_limit=result_limit
-        ) for name, (size, result_limit) in objects_to_size_and_result_limit.items()
-    })
+#     vision_system = VisionSystem(resolution=video_stream.resolution, objects_to_track={
+#         name: VisualObject(
+#             real_size=size,
+#             detection_model=ThreshBlob.load(
+#                 relpath("..", "models", f"{name}.threshblob.pkl")),
+#             result_limit=result_limit
+#         ) for name, (size, result_limit) in objects_to_size_and_result_limit.items()
+#     })
 
     try:
         from DriveSystem import DriveSystem
@@ -316,8 +316,6 @@ if __name__ == "__main__":
 
     ControlServer(
         port=8000,
-        video_stream=video_stream,
-        vision_system=vision_system,
         drive_system=drive_system,
         kicker_system=kicker_system,
         autobuild=True

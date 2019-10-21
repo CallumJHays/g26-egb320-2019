@@ -39,6 +39,7 @@ class VisualObject():
             self.detection_results, key=lambda result: -result.area())
         if self.result_limit is not None:
             self.detection_results = self.detection_results[0:self.result_limit]
+        self.bearings_distances = []
 
         real_x, real_y, real_z = self.real_size
         avg_real_width = (real_x + real_y) / 2
@@ -68,8 +69,13 @@ class VisualObject():
 
                 self.bearings_distances.append((bearing, distance))
             elif len(result.coords) == 4:  # TODO: redo this especially WTF
+                bearing = result.bearing
+                # bearing = math.pi - result.bearing
+                # bearing = result.bearing + math.pi / 2
+                # bearing = 2 * math.pi + bearing if bearing < -math.pi else bearing
+                # bearing = bearing - 2 * math.pi if bearing > math.pi else bearing
                 self.bearings_distances.append(
-                    (result.bearing, result.distance + avg_real_width / 2))
+                    (bearing, result.distance + avg_real_width / 2))
             else:
                 raise Exception("result type not supported")
 

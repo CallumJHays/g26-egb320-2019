@@ -1,152 +1,158 @@
 import numpy as np
 import math
+from time import sleep
+
+
+FORWARD_DIR = -np.pi / 2
+
 
 class NavigationSystem():
 
-    GOAL_P = 0.5
-    MAX_ROBOT_ROT = 1
-    MAX_ROBOT_VEL = 0.05
-    COBEARING = 1
-
-
-    def __init__(self, vision_system, drive_system, kicker_dribbler, debug_print):
+    def __init__(self, vision_system, drive_system, kicker_dribbler):
         self.vision_system = vision_system
         self.drive_system = drive_system
-        self.headingRad = 0
-        self.goal_found = False
-        self.lastHeading = 0.4
-        self.kicker_dribbler = kicker_dribbler
-        self.debug_print = debug_print
-        self.straight_steps_to_take = 0
-        self.stop_and_wait_for_manual_kick = False
-        self.ball_target_bear = None
-        self.prepping_final_kick = False
-        self.drive_straight_until_cant_see_ball = False
-        self.drive_straight_n = 0
-        self.behind_ball = False
-        self.prev_ball_range = None
-        self.cant_find_both = None
-        self.count = 0
-        self.heading_towards_ball = False
+        self.kick = kicker_dribbler
+        self.goal = 'blue'
+        self.state = None
+        self.state_params = (),
+
+    def update(self, ball_rb, yellow_rb, blue_rb, obstacles_rb):
+
+        ranges_bearings = {
+            'ball': ball_rb,
+            'yellow': yellow_rb,
+            'blue': blue_rb,
+            'obstacle': obstacles_rb
+        }
+        ranges_bearings['goal'] = ranges_bearings[self.goal]
+        # range within which something is considered straight ahead
+
+        def set_state(fun, *args):
+            if fun is None:
+                self.drive_system.set_desired_motion(0, 0, 0)
+            self.state = fun
+            self.state_params = args
+
+        if self.state is None:
+            if ball_rb:
+                def go_to_ball():
+                    set_state(goto_object_at_range,
+                              go_around_ball, 'ball', 0.3)
+
+                def go_around_ball():
+                    set_state(translate_around_obj_at_range_lining_up_objects,
+                              line_up_shot, 'ball', 0.3, 'goal')
+
+                def line_up_shot():
+                    set_state(rotate_towards_obj, kick_ball, 'ball')
+
+                def kick_ball():
+                    set_state(goto_kick,
+                              lambda: set_state(None), 'ball', 0.15)
+
+                go_to_ball()
+
+        if self.state:
+            desired_motion = self.state(ranges_bearings, *self.state_params)
+            self.drive_system.set_desired_motion(*desired_motion)
 
 
-    def update(self):
-        ballRB, _, _, _ = self.get_vision_results_vrep_format()
-        is_straight = lambda angle: abs(angle) < 0.05 # range within which something is considered straight ahead
+def goto_object_at_range(rbs, on_done, obj, range):
+    if rbs[obj] is not None:
+        obj_range, obj_bear = rbs[obj]
 
-        # if self.heading_towards_ball and ballRB is None:
-        #     self.drive_system.set_desired_motion(0,0,0)
+        if obj_range <= range:
+            on_done()
 
-        if ballRB:
-            _, ball_bear = ballRB
+        speed = 1 if obj_range > (range + 0.3) else (obj_range / (range + 0.3))
 
-            if is_straight(ball_bear):
-                self.drive_system.set_desired_motion(0, 1, 0)
-            else:
-                self.drive_system.set_desired_motion(0, 0, ball_bear)
+        x = -np.cos(obj_bear) * speed
+        y = -np.sin(obj_bear) * speed
 
-        # is_sane_bear = lambda bear: abs(bear) < 10
+        return x, y, 0
+    else:
+        return 0, 0, 0
 
-        # ballRB, goalRB, _, _ = self.get_vision_results_vrep_format()
-        # if ballRB:
-        #     if not is_sane_bear(ballRB[1]):
-        #         ballRB = None
 
-        # if goalRB:
-        #     if not is_sane_bear(goalRB[1]):
-        #         goalRB = None
-        # print('ball', ballRB, 'goal', goalRB)
+def translate_around_obj_at_range_lining_up_objects(rbs, on_done, obj, range, lineup):
+    print("Translating to align ball with goal")
+    if rbs[obj] is not None and rbs[lineup] is not None:
+        _, obj_bear = rbs[obj]
 
-        # if self.stop_and_wait_for_manual_kick:
-        #     print('waiting for manual kick')
-        # elif self.drive_straight_n > 0:
-        #     self.drive_system.set_desired_motion(0, 1, 0)
-        #     self.drive_straight_n -= 1
-        # elif self.drive_straight_until_cant_see_ball:
-        #     if ballRB:
-        #         _, ball_bear = ballRB
-        #         if self.ball_target_bear:
-        #             diff = self.ball_target_bear - ball_bear
-        #             if not is_straight(diff):
-        #                 print('adjusting position while driving straight')
-        #                 self.drive_system.set_desired_motion(0, 0, -diff)
-        #                 return
-                
-        #         print('driving straight')
-        #         self.drive_system.set_desired_motion(0, 1, 0)
-        #     else:
-        #         self.drive_straight_until_cant_see_ball = False
-        #         if self.prepping_final_kick:
-        #             self.stop_and_wait_for_manual_kick = True
-        #         else:
-        #             print('last seen ball range', self.prev_ball_range)
-        #             self.drive_straight_n = int(self.prev_ball_range / 0.01)
-        #             self.behind_ball = True
+        _, lineup_bear = rbs[lineup]
+        diff = lineup_bear - obj_bear
 
-        # elif ballRB:
-        #     _, ball_bear = ballRB
+        travel_angle = 0
+        # if diff < 0 and obj_bear >= math.pi / 2 and obj_bear <= 0.999 * math.pi and lineup_bear < math.pi / 2:
+        #     travel_angle = obj_bear - 0.57
+        # elif diff > 0 and lineup_bear >= math.pi / 2 and lineup_bear <= 0.999 * math.pi and obj_bear < math.pi / 2:
+        #     travel_angle = obj_bear + 0.57
+        if diff < 0:
+            travel_angle = obj_bear + 0.57
+        else:
+            travel_angle = obj_bear - 0.57
 
-        #     if self.ball_target_bear is not None:
-        #         print('rotating untill ball is at', self.ball_target_bear, 'current:', ball_bear)
-        #         diff = self.ball_target_bear - ball_bear
-        #         if is_straight(diff):
-        #             self.ball_target_bear = None
-        #             if self.prepping_final_kick:
-        #                 self.drive_straight_until_cant_see_ball = True
-        #             else:
-        #                 self.drive_straight_until_cant_see_ball = True
-        #         else:
-        #             self.drive_system.set_desired_motion(0, 0, -diff)
+        # travel_angle = obj_bear + (np.pi if diff > 0 else -np.pi) / 2
 
-        #     elif goalRB == None:
-        #         self.drive_system.set_desired_motion(0, 0, -ball_bear)
+        if is_straight(diff):
+            on_done()
 
-        #     # if we can see both the ball and the goal
-        #     elif goalRB and goalRB[1] < 10:
-        #         _, goal_bear = goalRB
-        #         diff = ball_bear - goal_bear
+        x = np.cos(travel_angle) * abs(diff) * 0.2
+        y = -np.sin(travel_angle) * abs(diff) * 0.2
 
-        #         print('can see both the ball and the goal, angle diff:', diff)
-                
-        #         if is_straight(diff):
+        return x, y, 0
+    else:
+        return 0, 0, 0
 
-        #             # face the ball straight on
-        #             self.ball_target_bear = 0
-        #             self.prepping_final_kick = True
-        #         else:
-        #             if self.behind_ball:
-        #                 self.ball_target_bear = 0
-        #             else:
-        #                 # rotate in diff dir until ball_bear is opposite the diff
-        #                 self.ball_target_bear = 0.5 if diff < 0 else -0.5
-        # else:
-        #     print("searching for ball")
-        #     self.drive_system.set_desired_motion(0, 0, 1)
-        #     self.count += 1
-        #     if self.count > 200 and goalRB == None and ballRB == None:
-        #         self.drive_system.set_desired_motion(0, -1, 0)
-        
 
-        # if ballRB:
-        #     self.prev_ball_range, _ = ballRB
-            
-        
-    def get_vision_results_vrep_format(self):
-        objs = self.vision_system.objects_to_track # for shorthand
+def rotate_towards_obj(rbs, on_done, obj):
+    print("Aligning robot with ball")
+    if rbs[obj] is not None:
+        obj_range, obj_bear = rbs[obj]
 
-        def vrep_format(bearings_distances, multi=False):
-            if any(bearings_distances):
-                if multi:
-                    return bearings_distances[::-1]
-                else:
-                    return bearings_distances[0][::-1]
-            else:
-                return None
+        obj_bear = obj_bear + (np.pi / 2)
 
-        return (
-            vrep_format(objs["ball"].bearings_distances),
-            vrep_format(objs["blue_goal"].bearings_distances),
-            None, None
-#             vrep_format(objs["yellow_goal"].bearings_distances),
-#             vrep_format(objs["obstacle"].bearings_distances, multi=True),
-        )
+        if is_straight(obj_bear):
+            on_done()
+        else:
+            return 0, 0, 0.07
+    #     diff = obj_bear - FORWARD_DIR
+    #     # if abs(diff) > np.pi:
+    #     #     diff -= 2 * np.pi
+
+    #     print('rotate on diff', diff)
+
+    #     if is_straight(diff):
+    #         on_done()
+
+    #     sign = -1 if diff < 0 else 1
+
+    #     omega = sign * max(0.02 * abs(diff), 0.07)
+
+    #     print('omega', omega)
+
+        # return 0, 0, 0.07
+    return 0, 0, 0
+
+
+def goto_kick(rbs, on_done, obj, range):
+    if rbs[obj] is not None:
+        obj_range, obj_bear = rbs[obj]
+
+        if obj_range <= range:
+            print("kick ball")
+            # self.kick.start_kicking()
+            return 0, 0, 0
+
+        speed = 1 if obj_range > (range + 0.3) else (obj_range / (range + 0.3))
+
+        x = -np.cos(obj_bear) * speed
+        y = -np.sin(obj_bear) * speed
+
+        return x, y, 0
+    else:
+        return 0, 0, 0
+
+
+def is_straight(angle):
+    return abs(angle) < 0.1
