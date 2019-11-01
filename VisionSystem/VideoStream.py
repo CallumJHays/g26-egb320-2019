@@ -32,10 +32,10 @@ class FrameIterator():
             stream.new_frame_event.wait()
             image = stream.image_buffer
 
-        if image.shape != stream.resolution + (3,):
-            image = cv2.resize(image, stream.resolution)
+            if image.shape != stream.resolution + (3,):
+                image = cv2.resize(image, stream.resolution)
 
-        return Frame(image, ColorSpaces.BGR)
+            return Frame(image, ColorSpaces.BGR)
 
 
 # Asynchronous camera / video-stream class
@@ -85,7 +85,6 @@ class VideoStream():
             x, y = self.raw_resolution
             self.image_buffer = np.empty((x * y * 3,), dtype=np.uint8)
             self.new_frame_event = Event()
-            self.new_frame_event.clear()
             self.started = False
             self.stopped = False
 
@@ -111,6 +110,8 @@ class VideoStream():
                     self.raw_resolution.transpose() + (3,))
             else:
                 _, self.image_buffer = self.cap.read()
+                if self.image_buffer is None:
+                    raise Exception("OpenCV was unable to retrieve image_buffers from the default capture device (id 0). This is usually because multiple other processes are accessing the camera device at the same time. If using jupyter notebook, try again with only this kernel running")
 
             if self.rotate_90_n > 0:
                 self.image_buffer = np.rot90(

@@ -121,14 +121,14 @@ def main():
 
     print("Launching control server...")
     try:
-#         video_stream = VideoStream(
-#             downsample_scale=5, crop=((0.13, 0), (.9, 1)))
-#         vision_system = setup_vision_system(video_stream.resolution)
+        #         video_stream = VideoStream(
+        #             downsample_scale=5, crop=((0.13, 0), (.9, 1)))
+        #         vision_system = setup_vision_system(video_stream.resolution)
 
         ControlServer(
             port=CONTROL_SERVER_PORT,
-#             video_stream=video_stream,
-#             vision_system=vision_system,
+            #             video_stream=video_stream,
+            #             vision_system=vision_system,
             drive_system=drive_system,
             kicker_system=kicker_system,
             autobuild=False

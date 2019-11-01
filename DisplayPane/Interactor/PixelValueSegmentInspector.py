@@ -10,9 +10,10 @@ class PixelValueSegmentInspector(Interactor):
 
     is_panel = True
 
-    def __init__(self):
+    def __init__(self, vision_system=None):
         self.segment_selector = SegmentSelector()
         self.enabled = True
+        self.vision_system = vision_system
 
     def link_with(self, display_pane):
         super().link_with(display_pane)
@@ -39,7 +40,14 @@ class PixelValueSegmentInspector(Interactor):
         self.pixel_intensities_mark = bq.Lines(
             scales=scales,
             colors=['blue', 'green', 'red'],
-            display_legend=True,
+            line_style='solid',
+            display_legend=True
+        )
+
+        self.pixel_thresholds_mark = bq.Lines(
+            scales=scales,
+            colors=['blue', 'green', 'red', 'blue', 'green', 'red'],
+            line_style='dashed',
             opacities=[0.7] * 3
         )
 
@@ -48,7 +56,7 @@ class PixelValueSegmentInspector(Interactor):
         ]
 
         self.pixel_intensities_fig = bq.Figure(
-            marks=[self.pixel_intensities_mark], axes=axes)
+            marks=[self.pixel_intensities_mark, self.pixel_thresholds_mark], axes=axes)
         self.pixel_intensities_fig.layout.width = '100%'
         self.pixel_intensities_fig.layout.height = str(
             self.display_pane.size * self.display_pane.available_space * FULL_HEIGHT) + 'px'
@@ -70,48 +78,49 @@ class PixelValueSegmentInspector(Interactor):
         ])
 
     def update_pixel_intensities_mark(self):
-        if self.enabled and len(self.segment_selector.segment_mark.y) == 2:
-
-            img = self.display_pane.filtered_frame.get(
-                self.display_pane.display_colorspace)
-            height, width, _ = img.shape
-
+        if self.enabled:
             ys = []
 
-            [init_x, final_x] = (
-                self.segment_selector.segment_mark.x * width).astype(int)
-            init_x = max(init_x, 0)
-            final_x = min(final_x, width)
+            if len(self.segment_selector.segment_mark.y) == 2 and len(self.segment_selector.segment_mark.x) == 2:
 
-            [init_y, final_y] = (
-                self.segment_selector.segment_mark.y * height).astype(int)
-            init_y = max(init_y, 0)
-            final_y = min(final_y, height)
+                img = self.display_pane.filtered_frame.get(
+                    self.display_pane.display_colorspace)
+                height, width, _ = img.shape
 
-            den = (final_x - init_x)
-            if den == 0:
-                self.pixel_intensities_mark.x = np.empty(shape=(0,))
-                self.pixel_intensities_mark.y = np.empty(shape=(0,))
-                return
+                [init_x, final_x] = (
+                    self.segment_selector.segment_mark.x * width).astype(int)
+                init_x = max(init_x, 0)
+                final_x = min(final_x, width)
 
-            def pos_neg(val):
-                return -1 if val < 0 else 1
+                [init_y, final_y] = (
+                    self.segment_selector.segment_mark.y * height).astype(int)
+                init_y = max(init_y, 0)
+                final_y = min(final_y, height)
 
-            num = final_y - init_y
-            gradient = num / den
+                den = (final_x - init_x)
+                if den == 0:
+                    self.pixel_intensities_mark.x = np.empty(shape=(0,))
+                    self.pixel_intensities_mark.y = np.empty(shape=(0,))
+                    return
 
-            direction = pos_neg(gradient) if math.isnan(
-                gradient) else pos_neg(num)
-            curr_y = init_y
+                def pos_neg(val):
+                    return -1 if val < 0 else 1
 
-            for x in range(init_x, final_x):
-                next_y = init_y + int(gradient * (x - init_x))
+                num = final_y - init_y
+                gradient = num / den
 
-                # TODO: this can probably be more efficient but I CBF rn:
-                for y in range(curr_y, next_y + direction, direction):
-                    ys.append(img[height - y - 1, x])
+                direction = pos_neg(gradient) if math.isnan(
+                    gradient) else pos_neg(num)
+                curr_y = init_y
 
-                curr_y = next_y
+                for x in range(init_x, final_x):
+                    next_y = init_y + int(gradient * (x - init_x))
+
+                    # TODO: this can probably be more efficient but I CBF rn:
+                    for y in range(curr_y, next_y + direction, direction):
+                        ys.append(img[height - y - 1, x])
+
+                    curr_y = next_y
 
             y_arr = np.array(ys)
             self.pixel_intensities_mark.y = y_arr.T
@@ -120,3 +129,17 @@ class PixelValueSegmentInspector(Interactor):
             self.pixel_intensities_mark.x = np.repeat(
                 np.arange(0, length).reshape((1, -1)),
                 repeats=3, axis=0)
+
+            for obj in self.vision_system.objects_to_track.values():
+                # thank you python for making this disgusting reflection possible
+                if hasattr(obj.detection_model, 'thresholder'):
+                    if len(self.pixel_intensities_mark.x.shape) == 2 and len(self.pixel_intensities_mark.x[0]) >= 2:
+                        min_x, max_x = tuple(self.pixel_intensities_mark.x[0][idx]
+                                             for idx in (0, -1))
+                        thresholder = obj.detection_model.thresholder
+
+                        self.pixel_thresholds_mark.x = np.repeat(
+                            [[min_x, max_x]], repeats=6, axis=0)
+                        self.pixel_thresholds_mark.y = list([thresh] * 2 for thresh in thresholder.lower +
+                                                            thresholder.upper)
+                        self.pixel_intensities_mark.labels = thresholder.colorspace.channel_labels

@@ -9,11 +9,13 @@ from VisionSystem import VisionSystem
 
 class ResultDisplayer(Interactor):
 
-    def __init__(self):
+    def __init__(self, vision_system):
         self.name2color = {}
+        self.vision_system = vision_system
 
     def link_with(self, display_pane):
         super().link_with(display_pane)
+        MAX_PIXEL_DIM = 5e3
 
         self.bounding_boxes = bq.Lines(
             stroke_width=2,
@@ -32,15 +34,18 @@ class ResultDisplayer(Interactor):
 
             width, height = display_pane.raw_frame.resolution()
 
-            for (name, (detection_results, bearings_distances)) in display_pane.vision_system.current_results.items():
+            for (name, (detection_results, bearings_distances)) in self.vision_system.current_results.items():
                 if name in self.name2color:
                     color = self.name2color[name]
                 else:
-                    color = display_pane.vision_system\
+                    color = self.vision_system\
                         .CATEGORICAL_COLORS[len(self.name2color)]
                     self.name2color[name] = color
 
                 for idx, (result, (bearing, distance)) in enumerate(zip(detection_results, bearings_distances)):
+                    if distance == np.inf:
+                        continue
+
                     if len(result.coords) == 2:
                         ((x1, y1), (x2, y2)) = result.coords
                         x1 /= width
@@ -56,6 +61,9 @@ class ResultDisplayer(Interactor):
 
                         x = np.array([x / width for x in xs])
                         y = np.array([1 - y / height for y in ys])
+
+                        if any(x > MAX_PIXEL_DIM) or any(y > MAX_PIXEL_DIM):
+                            continue
 
                         boxes_x.append(x)
                         boxes_y.append(y)

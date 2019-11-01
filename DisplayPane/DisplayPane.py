@@ -72,7 +72,7 @@ class DisplayPane(ipy.VBox):
                 self.interactors.append(FrameLabeller(self.dataset.labels))
 
         if self.vision_system is not None:
-            self.interactors.append(ResultDisplayer())
+            self.interactors.append(ResultDisplayer(self.vision_system))
 
         # link all required interactors
         for interactor in self.interactors:

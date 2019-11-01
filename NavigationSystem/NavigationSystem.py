@@ -12,7 +12,7 @@ class NavigationSystem():
         self.vision_system = vision_system
         self.drive_system = drive_system
         self.kick = kicker_dribbler
-        self.goal = 'blue'
+        self.goal = 'yellow'
         self.state = None
         self.state_params = (),
 
@@ -32,33 +32,41 @@ class NavigationSystem():
                 self.drive_system.set_desired_motion(0, 0, 0)
             self.state = fun
             self.state_params = args
+            if fun:
+                return fun(ranges_bearings, *args)
+            else:
+                return (0, 0, 0)
 
         if self.state is None:
             if ball_rb:
                 def go_to_ball(_rbs):
                     return set_state(goto_object_at_range,
-                                     go_around_ball, 'ball', 0.3)
+                                     go_around_ball, 'ball', 0.25)
 
                 def go_around_ball(_rbs):
                     return set_state(translate_around_obj_at_range_lining_up_objects,
-                                     line_up_shot, 'ball', 0.3, 'goal')
+                                     line_up_shot, 'ball', 0.25, 'goal')
 
                 def line_up_shot(rbs):
                     if rbs['ball'] is not None:
                         obj_range, obj_bear = rbs['ball']
                         diff = reorient(obj_bear - FORWARD_DIR)
+
                         if not is_straight(diff):
                             return set_state(rotate_towards_obj, line_up_shot, 'ball')
 
                         if obj_range > 0.2:
                             return set_state(goto_object_at_range, line_up_shot, 'ball', 0.2)
 
+                        if not is_straight(diff):
+                            return set_state(rotate_towards_obj, line_up_shot, 'ball')
+
                         self.kick.start_dribbling()
                         return set_state(motion_until_object_visibility_change, kick_ball, (0, 0.1, 0), 'ball', False)
 
                 def kick_ball(_rbs):
                     self.kick.start_kicking()
-                    return set_state(motion_until_object_visibility_change, stop_kicking, (0, 0, 0), 'ball', True)
+                    return set_state(motion_until_object_visibility_change, stop_kicking, (0, 1, 0), 'ball', True)
 
                 def stop_kicking(_rbs):
                     self.kick.stop_dribbling()
@@ -73,6 +81,7 @@ class NavigationSystem():
 
 
 def goto_object_at_range(rbs, on_done, obj, range):
+    print("goto_object_at_range", obj, range)
     if rbs[obj] is not None:
         obj_range, obj_bear = rbs[obj]
 
@@ -90,12 +99,16 @@ def goto_object_at_range(rbs, on_done, obj, range):
 
 
 def translate_around_obj_at_range_lining_up_objects(rbs, on_done, obj, range, lineup):
-    print("Translating to align ball with goal")
+    print("translate_around_obj_at_range_lining_up_objects", obj, range, lineup)
     if rbs[obj] is not None and rbs[lineup] is not None:
         _, obj_bear = rbs[obj]
 
         _, lineup_bear = rbs[lineup]
+
         diff = reorient(lineup_bear - obj_bear)
+
+        if is_straight(diff):
+            return on_done(rbs)
 
         # travel_angle = 0
         # # if diff < 0 and obj_bear >= math.pi / 2 and obj_bear <= 0.999 * math.pi and lineup_bear < math.pi / 2:
@@ -107,10 +120,7 @@ def translate_around_obj_at_range_lining_up_objects(rbs, on_done, obj, range, li
         # else:
         #     travel_angle = obj_bear - 0.57
 
-        travel_angle = obj_bear + (np.pi if diff > 0 else -np.pi) / 2
-
-        if is_straight(diff):
-            return on_done(rbs)
+        travel_angle = obj_bear + (np.pi if diff < 0 else -np.pi) / 2
 
         x = -np.cos(travel_angle) * abs(diff) * 0.2
         y = -np.sin(travel_angle) * abs(diff) * 0.2
@@ -121,16 +131,20 @@ def translate_around_obj_at_range_lining_up_objects(rbs, on_done, obj, range, li
 
 
 def rotate_towards_obj(rbs, on_done, obj):
-    print("Aligning robot with ball")
+    print("rotate_towards_obj", obj)
     if rbs[obj] is not None:
         _obj_range, obj_bear = rbs[obj]
 
-        diff = reorient(obj_bear - FORWARD_DIR)
+        diff = reorient(FORWARD_DIR - obj_bear)
 
         if is_straight(diff):
             return on_done(rbs)
         else:
-            return 0, 0, 0.02 * diff
+            omega = 0.02 * diff
+            rot_abs_min = 0.04
+            if abs(omega) < rot_abs_min:
+                omega = -rot_abs_min if omega < 0 else rot_abs_min
+            return 0, 0, omega
     #     diff = obj_bear - FORWARD_DIR
     #     # if abs(diff) > np.pi:
     #     #     diff -= 2 * np.pi
@@ -150,8 +164,10 @@ def rotate_towards_obj(rbs, on_done, obj):
 
 
 def motion_until_object_visibility_change(rbs, on_done, motion, obj, target_visibility):
+    print("motion_until_object_visibility_change",
+          motion, obj, target_visibility)
     if (rbs[obj] is not None) == target_visibility:
-        return on_done()
+        return on_done(rbs)
     return motion
 
 
@@ -160,4 +176,6 @@ def is_straight(angle):
 
 
 def reorient(angle):
-    return angle % (2 * np.pi) - np.pi
+    ang = angle % (2 * np.pi)
+    result = ang if ang < np.pi else ang - 2 * np.pi
+    return result

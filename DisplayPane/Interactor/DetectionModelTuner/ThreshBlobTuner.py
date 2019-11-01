@@ -23,7 +23,8 @@ class ThreshBlobTuner(DetectionModelTunerABC):
     def make_thresholder_controls(self):
         colorspace_picker = ColorSpacePicker(
             colorspace=self.detection_model.thresholder.colorspace)
-        segment_inspector = PixelValueSegmentInspector()
+        segment_inspector = PixelValueSegmentInspector(
+            self.display_pane.vision_system)
 
         self.model_display = DisplayPane(
             frame=self.display_pane.raw_frame,
@@ -45,7 +46,7 @@ class ThreshBlobTuner(DetectionModelTunerABC):
         for idx in range(len(thresh.lower)):
 
             minVal, maxVal = thresh.colorspace.valRange(idx)
-            
+
             slider = ipy.IntRangeSlider(
                 description=thresh.colorspace.channel_labels[idx],
                 value=(thresh.lower[idx], thresh.upper[idx]),

@@ -240,7 +240,7 @@ class ControlServer(Sanic):
         # the ffmpeg process will stop
         with os.fdopen(jpeg_fd, 'wb') as input_mpeg_stream:
             # run ffmpeg until we close the fifo
-            subprocess.Popen(FFmpeg(
+            ffmpeg = subprocess.Popen(FFmpeg(
                 # executable="/home/cal/berryconda3/bin/ffmpeg",
                 global_options=['-y'],
                 inputs={
@@ -256,6 +256,8 @@ class ControlServer(Sanic):
                 jpeg = cv2.imencode('.jpg', bgr)[1].tobytes()
 
                 input_mpeg_stream.write(jpeg)
+
+            ffmpeg.kill()
 
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs, host='0.0.0.0', port=self.port)
